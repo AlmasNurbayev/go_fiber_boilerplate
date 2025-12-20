@@ -20,7 +20,14 @@
 - [ ]  Ci/CD - action в гитхаб, сборка контейнеров для server и migrator, тесты, lint, пуш в докер-хаб
 - [ ]  Потом приделать grpc
 
-#Возможные источники для примера:
+# Возможные источники для примера:
 - https://github.com/indravscode/go-fiber-boilerplate
 - https://github.com/ribice/gorsk
 - https://habr.com/ru/companies/ozontech/articles/976950/
+
+# Контейнеры:  
+- server, seeder, migrator
+- orders - вынесенный GRPC-сервис для примера
+- postgres
+- NATS
+- redis
