@@ -1,0 +1,8 @@
+.env
+./config/.env
+./config/config.yaml
+/.vscode/
+/volume_*
+/_volume_*
+.idea/
+.DS_Store
