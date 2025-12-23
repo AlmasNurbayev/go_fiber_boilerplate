@@ -44,7 +44,7 @@ func Mustload(path string) *Config {
 	}
 	err := env.Parse(cfg)
 	if err != nil {
-		log.Fatal("not load config: ", err)
+		log.Fatal("Error parse env: ", err)
 	}
 
 	// if cfg.SECRET_KEY != "" {
