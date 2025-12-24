@@ -19,9 +19,12 @@ type Config struct {
 
 	AUTH_SECRET_KEY string `env:"SECRET_KEY"  json:"-"` // для шифрования в БД
 
-	HTTP_PORT    string        `env:"HTTP_PORT,required"`
-	HTTP_TIMEOUT time.Duration `env:"HTTP_TIMEOUT"`
-	HTTP_PREFORK bool          `env:"HTTP_PREFORK"`
+	HTTP_PORT                   string        `env:"HTTP_PORT,required"`
+	HTTP_TIMEOUT                time.Duration `env:"HTTP_TIMEOUT"`
+	HTTP_PREFORK                bool          `env:"HTTP_PREFORK"`
+	HTTP_CORS_ALLOW_ORIGINS     []string      `env:"HTTP_CORS_ALLOW_ORIGINS"`
+	HTTP_CORS_ALLOW_CREDENTIALS bool          `env:"HTTP_CORS_ALLOW_CREDENTIALS"`
+	HTTP_CORS_ALLOW_HEADERS     []string      `env:"HTTP_CORS_ALLOW_HEADERS"`
 
 	NATS_NAME            string `env:"NATS_NAME"`
 	NATS_PORT            string `env:"NATS_PORT"`

@@ -3,9 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
-	"github.com/gofiber/fiber/v3"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/logger"
 )
 
 func main() {
@@ -16,11 +21,27 @@ func main() {
 	// ключевые сообщения дублируем и в консоль и в логгер (он может писать в файл)
 	fmt.Println("============ start main ============")
 	cfg := config.Mustload(configEnv)
-	app := fiber.New()
+	Log := logger.InitLogger(cfg.ENV, cfg.LOG_ERROR_PATH)
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	http, err := httpApp.NewHttpApp(Log, cfg)
+	if err != nil {
+		Log.Error("error create http app", slog.String("err", err.Error()))
+		panic(err)
+	}
 
-	app.Listen(":" + cfg.HTTP_PORT)
+	go func() {
+		http.Run()
+	}()
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	signalString := <-done
+	Log.Info("received signal " + signalString.String())
+	fmt.Println("received signal " + signalString.String())
+
+	http.Stop()
+	Log.Info("http server stopped")
+	fmt.Println("============ http server stopped ============")
+
 }
