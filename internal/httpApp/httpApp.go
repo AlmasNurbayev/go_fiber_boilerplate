@@ -59,14 +59,10 @@ func NewHttpApp(
 		AllowHeaders:     cfg.HTTP_CORS_ALLOW_HEADERS,
 	}))
 
-	// service := services.NewService(log, storage, cfg)
-
 	// registry, httpRequestCounter, httpRequestDuration := newPromRegistry(log)
 	// server.Use(middleware.PrometheusMiddleware(httpRequestCounter, httpRequestDuration))
 
-	// handlers := httphandlers.NewHandler(log, service, registry)
-	// httproutes.RegisterMainRoutes(server, handlers, log)
-	// httproutes.RegisterKaspiRoutes(server, handlers, log)
+	RegisterMainRoutes(server, storage, log, cfg)
 
 	server.Get("/healthz", func(c fiber.Ctx) error {
 		return c.Status(200).SendString("OK")
