@@ -26,6 +26,8 @@ type Config struct {
 	HTTP_CORS_ALLOW_CREDENTIALS bool          `env:"HTTP_CORS_ALLOW_CREDENTIALS"`
 	HTTP_CORS_ALLOW_HEADERS     []string      `env:"HTTP_CORS_ALLOW_HEADERS"`
 
+	PROMETHEUS_HTTP_PORT string `env:"PROMETHEUS_HTTP_PORT"`
+
 	NATS_NAME            string `env:"NATS_NAME"`
 	NATS_PORT            string `env:"NATS_PORT"`
 	NATS_MONITORING_PORT string `env:"NATS_MONITORING_PORT"`

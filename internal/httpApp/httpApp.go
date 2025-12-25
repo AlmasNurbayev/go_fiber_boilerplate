@@ -6,6 +6,8 @@ import (
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/middleware"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -29,6 +31,7 @@ func (v *structValidator) Validate(out any) error {
 func NewHttpApp(
 	log *slog.Logger,
 	cfg *config.Config,
+	prometheus lib.PrometheusType,
 ) (*HttpApp, error) {
 
 	dsn := "postgres://" + cfg.POSTGRES_USER + ":" + cfg.POSTGRES_PASSWORD + "@" + cfg.POSTGRES_HOST + ":" + cfg.POSTGRES_INT_PORT + "/" + cfg.POSTGRES_DB + "?sslmode=disable"
@@ -59,8 +62,7 @@ func NewHttpApp(
 		AllowHeaders:     cfg.HTTP_CORS_ALLOW_HEADERS,
 	}))
 
-	// registry, httpRequestCounter, httpRequestDuration := newPromRegistry(log)
-	// server.Use(middleware.PrometheusMiddleware(httpRequestCounter, httpRequestDuration))
+	server.Use(middleware.PrometheusMiddleware(prometheus.CounterVec, prometheus.HistogramVec))
 
 	RegisterMainRoutes(server, storage, log, cfg)
 
