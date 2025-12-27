@@ -18,6 +18,7 @@ func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, log *slog.Logg
 	log.Info("/api")
 	api := app.Group("/api")
 	RegisterUserRoutes(api, storage, log, cfg)
+	RegisterAuthRoutes(api, storage, log, cfg)
 }
 
 func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
@@ -33,5 +34,17 @@ func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 
 	log.Info("GET /api/user/search/")
 	api.Get("/user/search/", userHandler.GetUserSearch)
+
+}
+
+func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
+
+	authService := services.NewAuthService(log, storage, cfg)
+	authHandler := handlers.NewAuthHandler(log, authService)
+
+	log.Info("POST /api/auth/register")
+	api.Post("/auth/register", authHandler.AuthRegister)
+	log.Info("POST /api/auth/login")
+	api.Post("/auth/login", authHandler.AuthLogin)
 
 }

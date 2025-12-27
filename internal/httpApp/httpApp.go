@@ -34,7 +34,7 @@ func NewHttpApp(
 	prometheus lib.PrometheusType,
 ) (*HttpApp, error) {
 
-	dsn := "postgres://" + cfg.POSTGRES_USER + ":" + cfg.POSTGRES_PASSWORD + "@" + cfg.POSTGRES_HOST + ":" + cfg.POSTGRES_INT_PORT + "/" + cfg.POSTGRES_DB + "?sslmode=disable"
+	dsn := "postgres://" + cfg.POSTGRES_USER + ":" + cfg.POSTGRES_PASSWORD + "@" + cfg.POSTGRES_HOST + ":" + cfg.POSTGRES_PORT + "/" + cfg.POSTGRES_DB + "?sslmode=disable"
 
 	ctxDB, cancel := context.WithTimeout(context.Background(), cfg.POSTGRES_TIMEOUT)
 	defer cancel()
@@ -51,10 +51,6 @@ func NewHttpApp(
 		WriteTimeout:    cfg.HTTP_TIMEOUT,
 		IdleTimeout:     cfg.HTTP_TIMEOUT,
 	})
-
-	if cfg.ENV != "prod" {
-		//server.Use(middleware.RequestTracingMiddleware(log))
-	}
 
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.HTTP_CORS_ALLOW_ORIGINS,

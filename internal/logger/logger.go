@@ -26,7 +26,12 @@ func InitLogger(env string, path string) *slog.Logger {
 	if err != nil {
 		panic("cannot open error.log: " + err.Error())
 	}
-	defer errFile.Close()
+	defer func() {
+		err := errFile.Close()
+		if err != nil {
+			panic("cannot close error.log: " + err.Error())
+		}
+	}()
 
 	var handler slog.Handler
 	stdout := os.Stdout

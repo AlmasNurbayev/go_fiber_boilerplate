@@ -7,6 +7,7 @@ import (
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -49,14 +50,14 @@ func (h *UserHandler) GetUserById(c fiber.Ctx) error {
 		id, err := strconv.ParseInt(idString, 10, 64)
 		if err != nil {
 			log.Warn(err.Error())
-			return c.Status(400).SendString(lib.ErrBadRequest.Message)
+			return c.Status(400).SendString(errorsApp.ErrBadRequest.Message)
 		}
 
 		res, err = h.service.GetUserByIdService(c, id)
 		if err != nil {
 			log.Warn(err.Error())
-			if err == lib.ErrUserNotFound.Error {
-				return c.Status(404).SendString(lib.ErrUserNotFound.Message)
+			if err == errorsApp.ErrUserNotFound.Error {
+				return c.Status(404).SendString(errorsApp.ErrUserNotFound.Message)
 			}
 			return c.Status(500).SendString(err.Error())
 		}
@@ -87,8 +88,8 @@ func (h *UserHandler) GetUserSearch(c fiber.Ctx) error {
 		res, err = h.service.GetUserByNameService(c, nameString)
 		if err != nil {
 			log.Warn(err.Error())
-			if err == lib.ErrUserNotFound.Error {
-				return c.Status(404).SendString(lib.ErrUserNotFound.Message)
+			if err == errorsApp.ErrUserNotFound.Error {
+				return c.Status(404).SendString(errorsApp.ErrUserNotFound.Message)
 			}
 			return c.Status(500).SendString(err.Error())
 		}

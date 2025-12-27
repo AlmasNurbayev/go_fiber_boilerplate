@@ -15,7 +15,6 @@ type Config struct {
 	POSTGRES_PORT     string        `env:"POSTGRES_PORT"`
 	POSTGRES_TIMEOUT  time.Duration `env:"POSTGRES_TIMEOUT"`
 	POSTGRES_HOST     string        `env:"POSTGRES_HOST"`
-	POSTGRES_INT_PORT string        `env:"POSTGRES_INT_PORT"`
 
 	AUTH_SECRET_KEY string `env:"SECRET_KEY"  json:"-"` // для шифрования в БД
 

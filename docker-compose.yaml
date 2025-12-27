@@ -50,7 +50,6 @@ services:
 
   postgres:
     image: postgres:18.1-alpine3.23
-    #container_name: cipo_backend_postgres
     restart: always
     environment:
       - TZ='Asia/Qyzylorda'
@@ -63,9 +62,9 @@ services:
       - '${POSTGRES_PORT}:5432'
     command: ['postgres', '-c', 'config_file=/etc/postgresql/postgresql.conf']
     volumes:
-      - ./pg_conf/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ./_volume_storage/:/var/lib/postgresql/data
-
+      - ./pg_conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./_volume_storage:/var/lib/postgresql/data
+  #  networks:
   # cipo_bot_nats:
   #   image: nats:2.11.7-alpine3.22
   #   #container_name: ${NATS_NAME}
