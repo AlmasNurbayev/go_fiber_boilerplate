@@ -3,17 +3,21 @@ package httpApp
 import (
 	"log/slog"
 
+	_ "github.com/AlmasNurbayev/go_fiber_boilerplate/docs"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/handlers"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/services"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/swagger/v2"
 )
 
 func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
 	cp := "registerRoutes"
 	log = log.With(slog.String("cp", cp))
 	log.Info("Register routes:")
+
+	app.Get("/swagger/*", swagger.HandlerDefault) // default
 
 	log.Info("/api")
 	api := app.Group("/api")

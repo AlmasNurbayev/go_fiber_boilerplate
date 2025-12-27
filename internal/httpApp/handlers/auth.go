@@ -27,6 +27,15 @@ func NewAuthHandler(log *slog.Logger, service authService) *AuthHandler {
 	}
 }
 
+// @Summary      Register as user
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.AuthRegisterRequest  true  "Request body"
+// @Success      201      {object}  dto.AuthRegisterResponse
+// @Failure      409      {string}  string  "значение для поля уже существует (ограничение уникальности: users_XXXX_key)"
+// @Failure      400      {string}  string  "Key: 'AuthRegisterRequest.Password' Error:Field validation for 'Password' failed on the 'min' tag"
+// @Router       /auth/register [post]
 func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 	op := "HttpHandlers.AuthRegister"
 	log := h.log.With(slog.String("op", op))
@@ -54,13 +63,10 @@ func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 	res, err := h.service.Register(c, body)
 	if err != nil {
 		log.Warn(err.Error())
-		if err == errorsApp.ErrUserNotFound.Error {
-			return c.Status(404).SendString(errorsApp.ErrUserNotFound.Message)
-		}
-		return c.Status(500).SendString(err.Error())
+		return c.Status(400).SendString(err.Error())
 	}
 
-	return c.Status(200).JSON(res)
+	return c.Status(201).JSON(res)
 }
 
 func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {

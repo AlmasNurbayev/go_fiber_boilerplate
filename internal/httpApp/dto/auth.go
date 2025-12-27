@@ -3,8 +3,8 @@ package dto
 import "github.com/guregu/null/v6"
 
 type AuthRegisterRequest struct {
-	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty"`
-	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty"`
+	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty" swaggertype:"string" example:"+77012345678"`
+	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty" swaggertype:"string" example:"test@mail.com"`
 	Name         string      `json:"name" validate:"required"`
 	Password     string      `json:"password" validate:"required,min=8"`
 }
@@ -16,8 +16,8 @@ type AuthRegisterResponse struct {
 }
 
 type AuthLoginRequest struct {
-	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty"`
-	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty"`
+	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty" swaggertype:"string" example:"+77012345678"`
+	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty" swaggertype:"string" example:"test@mail.com"`
 	Password     string      `json:"password" validate:"required,min=8"`
 }
 

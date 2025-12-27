@@ -15,6 +15,14 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/logger"
 )
 
+// @title go-fiber-boilerplate API documentation
+// @version 1.0.0
+// @license.name MIT
+// @license.url https://github.com/indrayy
+// @host localhost:3199
+// @BasePath /api
+// @type.alias      null.String string
+// @type.alias      sql.NullString string
 func main() {
 	var configEnv string
 	flag.StringVar(&configEnv, "configEnv", "", "Path to env-file")

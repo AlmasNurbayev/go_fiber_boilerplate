@@ -51,6 +51,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 	entity, dbError := s.authStorage.NewUser(ctx, models.UserEntity{
 		Name:          user.Name,
 		Email:         user.Email,
+		Phone_number:  user.Phone_number,
 		Password_hash: hashedPassword,
 		Role_id:       3, // default role user TODO - перенести в таблицу настроек
 	})
