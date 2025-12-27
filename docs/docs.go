@@ -10,10 +10,6 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {},
-        "license": {
-            "name": "MIT",
-            "url": "https://github.com/indrayy"
-        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -113,7 +109,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:3199",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "go-fiber-boilerplate API documentation",
+	Title:            "github.com/AlmasNurbayev/go_fiber_boilerplate API documentation",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -29,10 +29,7 @@ definitions:
 host: localhost:3199
 info:
   contact: {}
-  license:
-    name: MIT
-    url: https://github.com/indrayy
-  title: go-fiber-boilerplate API documentation
+  title: github.com/AlmasNurbayev/go_fiber_boilerplate API documentation
   version: 1.0.0
 paths:
   /auth/register:

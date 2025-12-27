@@ -1,12 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "go-fiber-boilerplate API documentation",
+        "title": "github.com/AlmasNurbayev/go_fiber_boilerplate API documentation",
         "contact": {},
-        "license": {
-            "name": "MIT",
-            "url": "https://github.com/indrayy"
-        },
         "version": "1.0.0"
     },
     "host": "localhost:3199",
