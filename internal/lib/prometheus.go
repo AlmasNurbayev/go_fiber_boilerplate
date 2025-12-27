@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -39,7 +38,6 @@ func NewPromRegistry(log *slog.Logger) PrometheusType {
 		httpRequestCounter,
 	)
 	log.Info("init prometheus registry")
-	fmt.Println("init prometheus registry")
 
 	return PrometheusType{
 		Registry:     registry,
