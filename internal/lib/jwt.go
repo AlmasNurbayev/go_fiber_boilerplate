@@ -16,12 +16,13 @@ type JWTClaims struct {
 	Exp      int64  `json:"exp"`
 }
 
-func CreateJWT(claim JWTClaims, secretKey string, exp time.Duration) (string, error) {
+func CreateJWT(claim JWTClaims, secretKey string, exp time.Duration, typ string) (string, error) {
 
 	var claims = jwt.MapClaims{
 		"iss":       claim.Iss,
 		"iat":       time.Now().Unix(),
 		"exp":       time.Now().Add(exp).Unix(),
+		"typ":       typ,
 		"user_id":   claim.UserId,
 		"user_name": claim.UserName,
 		"role_id":   claim.RoleId,
@@ -34,7 +35,7 @@ func CreateJWT(claim JWTClaims, secretKey string, exp time.Duration) (string, er
 	return signedToken, nil
 }
 
-func GetUserIdFromToken(token, secretKey string, issuer string) (int64, error) {
+func GetUserIdFromAccessToken(token, secretKey string, issuer string) (int64, error) {
 	parsedToken, err := jwt.Parse(token,
 		func(_ *jwt.Token) (interface{}, error) { return []byte(secretKey), nil },
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
@@ -49,6 +50,39 @@ func GetUserIdFromToken(token, secretKey string, issuer string) (int64, error) {
 		userIdFloat, ok := claims["user_id"].(string)
 		if !ok {
 			return 0, fmt.Errorf("user_id not found in token claims")
+		}
+		if claims["typ"] != "access" {
+			return 0, fmt.Errorf("invalid token type")
+		}
+		var userId int64
+		_, err := fmt.Sscan(userIdFloat, &userId)
+		if err != nil {
+			return 0, fmt.Errorf("invalid user_id format in token claims")
+		}
+		return userId, nil
+	} else {
+		return 0, fmt.Errorf("invalid token")
+	}
+}
+
+func GetUserIdFromRefreshToken(token, secretKey string, issuer string) (int64, error) {
+	parsedToken, err := jwt.Parse(token,
+		func(_ *jwt.Token) (interface{}, error) { return []byte(secretKey), nil },
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
+		jwt.WithIssuer(issuer),
+		jwt.WithExpirationRequired(),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
+		userIdFloat, ok := claims["user_id"].(string)
+		if !ok {
+			return 0, fmt.Errorf("user_id not found in token claims")
+		}
+		if claims["typ"] != "refresh" {
+			return 0, fmt.Errorf("invalid token type")
 		}
 		var userId int64
 		_, err := fmt.Sscan(userIdFloat, &userId)

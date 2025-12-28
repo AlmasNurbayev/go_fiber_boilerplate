@@ -14,6 +14,7 @@ type authService interface {
 	Register(context.Context, dto.AuthRegisterRequest) (dto.AuthRegisterResponse, error)
 	Login(context.Context, dto.AuthLoginRequest) (dto.AuthLoginResponse, error)
 	Hello(context.Context, string) (dto.AuthHelloResponse, error)
+	Refresh(context.Context, string) (dto.AuthLoginResponse, error)
 }
 
 type AuthHandler struct {
@@ -124,5 +125,35 @@ func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
 		log.Warn(err2.Error())
 		return c.Status(errorsApp.ErrAuthentication.Code).SendString(errorsApp.ErrAuthentication.Message)
 	}
+	return c.Status(200).JSON(res)
+}
+
+// @Summary      Refresh token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security BearerAuth
+// @Success      200      {object}  dto.AuthLoginResponse
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /auth/refresh [get]
+func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
+	op := "HttpHandlers.AuthRefresh"
+	log := h.log.With(slog.String("op", op))
+
+	token, err := lib.ExtractBearerToken(c)
+	if err != nil {
+		log.Warn(err.Message)
+		return c.Status(err.Code).SendString(err.Message)
+	}
+
+	res, err2 := h.service.Refresh(c, token)
+	if err2 != nil {
+		log.Warn(err2.Error())
+		if err == &errorsApp.ErrAuthentication {
+			return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
+		}
+		return c.Status(500).SendString(err2.Error())
+	}
+
 	return c.Status(200).JSON(res)
 }

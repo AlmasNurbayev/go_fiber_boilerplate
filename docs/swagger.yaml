@@ -117,6 +117,26 @@ paths:
       summary: Login as user
       tags:
       - Auth
+  /auth/refresh:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthLoginResponse'
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Refresh token
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:

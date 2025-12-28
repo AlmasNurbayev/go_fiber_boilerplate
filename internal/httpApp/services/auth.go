@@ -138,17 +138,26 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		UserName: userEntity.Name,
 		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
 		Iss:      s.cfg.SERVICE_NAME,
-	}, s.cfg.AUTH_SECRET_KEY, time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour)
+	}, s.cfg.AUTH_SECRET_KEY,
+		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
+		"access")
+
+	if err != nil {
+		log.Error("error generate access token", slog.String("err", err.Error()))
+		return dto, err
+	}
 
 	dto.RefreshToken, err = lib.CreateJWT(lib.JWTClaims{
 		UserId:   strconv.FormatInt(userEntity.Id, 10),
 		UserName: userEntity.Name,
 		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
 		Iss:      s.cfg.SERVICE_NAME,
-	}, s.cfg.AUTH_SECRET_KEY, time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour)
+	}, s.cfg.AUTH_SECRET_KEY,
+		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
+		"refresh")
 
 	if err != nil {
-		log.Error("error generate access token", slog.String("err", err.Error()))
+		log.Error("error generate refresh token", slog.String("err", err.Error()))
 		return dto, err
 	}
 
@@ -161,7 +170,7 @@ func (s *AuthService) Hello(ctx context.Context, token string) (dto.AuthHelloRes
 	log.Info(op)
 
 	dto := dto.AuthHelloResponse{}
-	userId, err := lib.GetUserIdFromToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
+	userId, err := lib.GetUserIdFromAccessToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
 	if err != nil || userId == 0 {
 		log.Warn("error get user id from token", slog.String("err", err.Error()))
 		return dto, err
@@ -185,6 +194,68 @@ func (s *AuthService) Hello(ctx context.Context, token string) (dto.AuthHelloRes
 		return dto, errCopy
 	}
 	dto.Role_name = role.Name
+
+	return dto, nil
+}
+
+func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginResponse, error) {
+	op := "services.Refresh"
+	log := s.log.With(slog.String("op", op))
+	log.Info(op)
+
+	dto := dto.AuthLoginResponse{}
+	userId, err := lib.GetUserIdFromRefreshToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
+	if err != nil || userId == 0 {
+		log.Warn("error get user id from token", slog.String("err", err.Error()))
+		return dto, err
+	}
+
+	userEntity, dbError := s.authStorage.GetUserById(ctx, userId)
+	if dbError != nil {
+		log.Warn("error get user by id", slog.String("err", dbError.Message))
+		return dto, dbError.Error
+	}
+
+	role, dbError := s.authStorage.GetRoleById(ctx, userEntity.Role_id)
+	if dbError != nil {
+		log.Warn("error get role by id", slog.String("err", dbError.Message))
+		return dto, dbError.Error
+	}
+
+	errCopy := copier.Copy(&dto, &userEntity)
+	if errCopy != nil {
+		log.Error("", slog.String("err", errCopy.Error()))
+		return dto, errCopy
+	}
+	dto.Role_name = role.Name
+
+	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
+		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserName: userEntity.Name,
+		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		Iss:      s.cfg.SERVICE_NAME,
+	}, s.cfg.AUTH_SECRET_KEY,
+		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
+		"access")
+
+	if err != nil {
+		log.Error("error generate access token", slog.String("err", err.Error()))
+		return dto, err
+	}
+
+	dto.RefreshToken, err = lib.CreateJWT(lib.JWTClaims{
+		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserName: userEntity.Name,
+		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		Iss:      s.cfg.SERVICE_NAME,
+	}, s.cfg.AUTH_SECRET_KEY,
+		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
+		"refresh")
+
+	if err != nil {
+		log.Error("error generate refresh token", slog.String("err", err.Error()))
+		return dto, err
+	}
 
 	return dto, nil
 }
