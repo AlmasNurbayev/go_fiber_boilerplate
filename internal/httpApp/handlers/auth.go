@@ -47,14 +47,8 @@ func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 		return c.Status(400).SendString(err.Error())
 	}
 
-	// for i := 1; i <= 1000; i++ {
-	// 	//fmt.Printf("Step %d\n", i)  // Логирование шага
-	// 	//time.Sleep(1 * time.Millisecond) // Задержка 1 секунда
-	// }
-
 	body := dto.AuthRegisterRequest{}
 
-	// 2. Используем Bind для заполнения структуры из Body
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(errorsApp.ErrInternalError.Code).JSON(fiber.Map{
 			"error": "Некорректные данные: " + err.Error(),
@@ -70,6 +64,14 @@ func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 	return c.Status(201).JSON(res)
 }
 
+// @Summary      Login as user
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.AuthLoginRequest  true  "Request body"
+// @Success      200      {object}  dto.AuthLoginResponse
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /auth/login [post]
 func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 	op := "HttpHandlers.AuthLogin"
 	log := h.log.With(slog.String("op", op))
@@ -80,15 +82,7 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		return c.Status(400).SendString(err.Error())
 	}
 
-	// for i := 1; i <= 1000; i++ {
-	// 	//fmt.Printf("Step %d\n", i)  // Логирование шага
-	// 	//time.Sleep(1 * time.Millisecond) // Задержка 1 секунда
-	// }
-
 	body := dto.AuthLoginRequest{}
-	//res := dto.AuthLoginResponse{}
-
-	// 2. Используем Bind для заполнения структуры из Body
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(errorsApp.ErrInternalError.Code).JSON(fiber.Map{
 			"error": "Некорректные данные: " + err.Error(),
@@ -107,6 +101,14 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
+// @Summary      Check auth token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security BearerAuth
+// @Success      200      {object}  dto.AuthHelloResponse
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /auth/hello [get]
 func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
 	op := "HttpHandlers.AuthHello"
 	log := h.log.With(slog.String("op", op))

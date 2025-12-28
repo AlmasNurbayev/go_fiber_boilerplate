@@ -1,5 +1,43 @@
 basePath: /api
 definitions:
+  dto.AuthHelloResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone_number:
+        type: string
+      role_name:
+        type: string
+    type: object
+  dto.AuthLoginRequest:
+    properties:
+      email:
+        example: test@mail.com
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phone_number:
+        example: "+77012345678"
+        type: string
+    required:
+    - password
+    type: object
+  dto.AuthLoginResponse:
+    properties:
+      access_token:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role_name:
+        type: string
+    type: object
   dto.AuthRegisterRequest:
     properties:
       email:
@@ -32,6 +70,51 @@ info:
   title: github.com/AlmasNurbayev/go_fiber_boilerplate API documentation
   version: 1.0.0
 paths:
+  /auth/hello:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthHelloResponse'
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Check auth token
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthLoginResponse'
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      summary: Login as user
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -63,4 +146,9 @@ paths:
       summary: Register as user
       tags:
       - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

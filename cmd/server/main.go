@@ -19,6 +19,9 @@ import (
 // @version 1.0.0
 // @host localhost:3199
 // @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	var configEnv string
 	flag.StringVar(&configEnv, "configEnv", "", "Path to env-file")
