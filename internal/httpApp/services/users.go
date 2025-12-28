@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
 )
 
@@ -16,7 +17,7 @@ type UserService struct {
 }
 
 type userStorage interface {
-	GetUserByIdStorage(ctx context.Context, id int64) (models.UserEntity, error)
+	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
 	GetUserByNameStorage(ctx context.Context, name string) (models.UserEntity, error)
 }
 

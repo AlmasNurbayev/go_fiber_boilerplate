@@ -50,5 +50,7 @@ func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 	api.Post("/auth/register", authHandler.AuthRegister)
 	log.Info("POST /api/auth/login")
 	api.Post("/auth/login", authHandler.AuthLogin)
+	log.Info("GET /api/auth/hello")
+	api.Get("/auth/hello", authHandler.AuthHello)
 
 }

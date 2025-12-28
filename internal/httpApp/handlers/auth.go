@@ -13,6 +13,7 @@ import (
 type authService interface {
 	Register(context.Context, dto.AuthRegisterRequest) (dto.AuthRegisterResponse, error)
 	Login(context.Context, dto.AuthLoginRequest) (dto.AuthLoginResponse, error)
+	Hello(context.Context, string) (dto.AuthHelloResponse, error)
 }
 
 type AuthHandler struct {
@@ -103,5 +104,23 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
+	return c.Status(200).JSON(res)
+}
+
+func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
+	op := "HttpHandlers.AuthHello"
+	log := h.log.With(slog.String("op", op))
+
+	token, err := lib.ExtractBearerToken(c)
+	if err != nil {
+		log.Warn(err.Message)
+		return c.Status(err.Code).SendString(err.Message)
+	}
+
+	res, err2 := h.service.Hello(c, token)
+	if err2 != nil {
+		log.Warn(err2.Error())
+		return c.Status(errorsApp.ErrAuthentication.Code).SendString(errorsApp.ErrAuthentication.Message)
+	}
 	return c.Status(200).JSON(res)
 }

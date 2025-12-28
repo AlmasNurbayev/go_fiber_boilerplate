@@ -27,3 +27,11 @@ type AuthLoginResponse struct {
 	Role_name   string `json:"role_name"`
 	AccessToken string `json:"access_token"`
 }
+
+type AuthHelloResponse struct {
+	Id           int64  `json:"id"`
+	Name         string `json:"name"`
+	Role_name    string `json:"role_name"`
+	Email        string `json:"email"`
+	Phone_number string `json:"phone_number"`
+}

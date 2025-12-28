@@ -9,23 +9,27 @@ import (
 )
 
 type Config struct {
-	POSTGRES_USER     string        `env:"POSTGRES_USER" json:"-"`
-	POSTGRES_PASSWORD string        `env:"POSTGRES_PASSWORD" json:"-"`
-	POSTGRES_DB       string        `env:"POSTGRES_DB"`
-	POSTGRES_PORT     string        `env:"POSTGRES_PORT"`
-	POSTGRES_TIMEOUT  time.Duration `env:"POSTGRES_TIMEOUT"`
-	POSTGRES_HOST     string        `env:"POSTGRES_HOST"`
+	SERVICE_NAME string `env:"SERVICE_NAME,required"`
 
-	AUTH_SECRET_KEY string `env:"SECRET_KEY"  json:"-"` // для шифрования в БД
+	POSTGRES_USER     string        `env:"POSTGRES_USER,required" json:"-"`
+	POSTGRES_PASSWORD string        `env:"POSTGRES_PASSWORD,required" json:"-"`
+	POSTGRES_DB       string        `env:"POSTGRES_DB,required"`
+	POSTGRES_PORT     string        `env:"POSTGRES_PORT,required"`
+	POSTGRES_TIMEOUT  time.Duration `env:"POSTGRES_TIMEOUT,required"`
+	POSTGRES_HOST     string        `env:"POSTGRES_HOST,required"`
+
+	AUTH_SECRET_KEY              string `env:"AUTH_SECRET_KEY,required"  json:"-"` // для шифрования в БД
+	AUTH_ACCESS_TOKEN_EXP_HOURS  int    `env:"AUTH_ACCESS_TOKEN_EXP_HOURS"`
+	AUTH_REFRESH_TOKEN_EXP_HOURS int    `env:"AUTH_REFRESH_TOKEN_EXP_HOURS"`
 
 	HTTP_PORT                   string        `env:"HTTP_PORT,required"`
-	HTTP_TIMEOUT                time.Duration `env:"HTTP_TIMEOUT"`
+	HTTP_TIMEOUT                time.Duration `env:"HTTP_TIMEOUT,required"`
 	HTTP_PREFORK                bool          `env:"HTTP_PREFORK"`
-	HTTP_CORS_ALLOW_ORIGINS     []string      `env:"HTTP_CORS_ALLOW_ORIGINS"`
-	HTTP_CORS_ALLOW_CREDENTIALS bool          `env:"HTTP_CORS_ALLOW_CREDENTIALS"`
-	HTTP_CORS_ALLOW_HEADERS     []string      `env:"HTTP_CORS_ALLOW_HEADERS"`
+	HTTP_CORS_ALLOW_ORIGINS     []string      `env:"HTTP_CORS_ALLOW_ORIGINS,required"`
+	HTTP_CORS_ALLOW_CREDENTIALS bool          `env:"HTTP_CORS_ALLOW_CREDENTIALS,required"`
+	HTTP_CORS_ALLOW_HEADERS     []string      `env:"HTTP_CORS_ALLOW_HEADERS,required"`
 
-	PROMETHEUS_HTTP_PORT string `env:"PROMETHEUS_HTTP_PORT"`
+	PROMETHEUS_HTTP_PORT string `env:"PROMETHEUS_HTTP_PORT,required"`
 
 	NATS_NAME            string `env:"NATS_NAME"`
 	NATS_PORT            string `env:"NATS_PORT"`
@@ -34,7 +38,7 @@ type Config struct {
 
 	LOG_ERROR_PATH string `env:"LOG_ERROR_PATH"`
 
-	ENV string `env:"ENV"`
+	ENV string `env:"ENV,required"`
 }
 
 func Mustload(path string) *Config {

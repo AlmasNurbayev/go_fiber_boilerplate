@@ -65,7 +65,7 @@ func (s *Storage) GetRoleById(ctx context.Context, id int64) (models.RoleEntity,
 func (s *Storage) GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError) {
 	op := "storage.GetUserByIdStorage"
 	log := s.log.With("op", op)
-	var user = []models.UserEntity{}
+	var user = models.UserEntity{}
 
 	query := `SELECT * FROM "users" WHERE id = $1`
 
@@ -73,16 +73,16 @@ func (s *Storage) GetUserById(ctx context.Context, id int64) (models.UserEntity,
 	if err != nil {
 		log.Error(err.Error())
 		if errors.Is(err, pgx.ErrNoRows) {
-			return user[0], &errorsApp.DbError{
+			return user, &errorsApp.DbError{
 				Field:   "id",
 				Data:    id,
 				Message: "user not found",
 				Error:   errors.New("user with id " + strconv.FormatInt(id, 10) + " not found"),
 			}
 		}
-		return user[0], mapPgError(err)
+		return user, mapPgError(err)
 	}
-	return user[0], nil
+	return user, nil
 }
 
 func (s *Storage) GetUserByEmail(ctx context.Context, email string) (models.UserEntity, *errorsApp.DbError) {
@@ -123,6 +123,7 @@ func (s *Storage) GetUserByPhoneNumber(ctx context.Context, phone_number string)
 		log.Error(err.Error())
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user, &errorsApp.DbError{
+				Type:    "not_found",
 				Field:   "phone_number",
 				Data:    phone_number,
 				Message: "user not found",

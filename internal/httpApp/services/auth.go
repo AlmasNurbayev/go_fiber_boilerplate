@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"log/slog"
+	"strconv"
+	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
@@ -23,6 +25,7 @@ type authStorage interface {
 	GetRoleById(ctx context.Context, id int64) (models.RoleEntity, *errorsApp.DbError)
 	GetUserByEmail(ctx context.Context, email string) (models.UserEntity, *errorsApp.DbError)
 	GetUserByPhoneNumber(ctx context.Context, phone_number string) (models.UserEntity, *errorsApp.DbError)
+	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
 }
 
 func NewAuthService(log *slog.Logger,
@@ -130,7 +133,50 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 	}
 	dto.Role_name = role.Name
 
-	//accessToken, err := lib.GenerateJWTToken(s.cfg.JWT.SecretKey, userEntity.Id, userEntity.Role_id, s.cfg.JWT.ExpireHours)
+	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
+		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserName: userEntity.Name,
+		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		Iss:      s.cfg.SERVICE_NAME,
+	}, s.cfg.AUTH_SECRET_KEY, time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour)
+	if err != nil {
+		log.Error("error generate access token", slog.String("err", err.Error()))
+		return dto, err
+	}
+
+	return dto, nil
+}
+
+func (s *AuthService) Hello(ctx context.Context, token string) (dto.AuthHelloResponse, error) {
+	op := "services.Hello"
+	log := s.log.With(slog.String("op", op))
+	log.Info(op)
+
+	dto := dto.AuthHelloResponse{}
+	userId, err := lib.GetUserIdFromToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
+	if err != nil || userId == 0 {
+		log.Warn("error get user id from token", slog.String("err", err.Error()))
+		return dto, err
+	}
+
+	userEntity, dbError := s.authStorage.GetUserById(ctx, userId)
+	if dbError != nil {
+		log.Warn("error get user by id", slog.String("err", dbError.Message))
+		return dto, dbError.Error
+	}
+
+	role, dbError := s.authStorage.GetRoleById(ctx, userEntity.Role_id)
+	if dbError != nil {
+		log.Warn("error get role by id", slog.String("err", dbError.Message))
+		return dto, dbError.Error
+	}
+
+	errCopy := copier.Copy(&dto, &userEntity)
+	if errCopy != nil {
+		log.Error("", slog.String("err", errCopy.Error()))
+		return dto, errCopy
+	}
+	dto.Role_name = role.Name
 
 	return dto, nil
 }
