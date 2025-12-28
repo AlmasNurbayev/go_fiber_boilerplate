@@ -139,6 +139,14 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY, time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour)
+
+	dto.RefreshToken, err = lib.CreateJWT(lib.JWTClaims{
+		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserName: userEntity.Name,
+		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		Iss:      s.cfg.SERVICE_NAME,
+	}, s.cfg.AUTH_SECRET_KEY, time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour)
+
 	if err != nil {
 		log.Error("error generate access token", slog.String("err", err.Error()))
 		return dto, err

@@ -186,6 +186,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "refresh_token": {
+                    "type": "string"
+                },
                 "role_name": {
                     "type": "string"
                 }
