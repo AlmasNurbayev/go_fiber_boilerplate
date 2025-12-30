@@ -135,7 +135,7 @@ func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
 // @Security BearerAuth
 // @Success      200      {object}  dto.AuthLoginResponse
 // @Failure      401      {string}  string  "authentication failed"
-// @Router       /auth/refresh [get]
+// @Router       /auth/refresh [post]
 func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	op := "HttpHandlers.AuthRefresh"
 	log := h.log.With(slog.String("op", op))
