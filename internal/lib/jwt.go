@@ -48,13 +48,26 @@ func GetClaimsFromRefreshToken(token, secretKey string, issuer string) (JWTClaim
 	}
 
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
-		fmt.Println(claims)
-		if claims["typ"] != "access" {
+		if typ, ok := claims["typ"].(string); !ok || typ != "access" {
 			return res, fmt.Errorf("invalid token type")
 		}
-		res.UserId = int64(claims["user_id"].(float64))
-		res.UserName = claims["user_name"].(string)
-		res.RoleId = int64(claims["role_id"].(float64))
+
+		userId, ok := claims["user_id"].(float64)
+		if !ok {
+			return res, fmt.Errorf("user_id not found or invalid")
+		}
+		res.UserId = int64(userId)
+
+		userName, ok := claims["user_name"].(string)
+		if !ok {
+			return res, fmt.Errorf("user_name not found or invalid")
+		}
+		res.UserName = userName
+		roleId, ok := claims["role_id"].(float64)
+		if !ok {
+			return res, fmt.Errorf("role_id not found or invalid")
+		}
+		res.RoleId = int64(roleId)
 		if res.UserId == 0 {
 			return res, fmt.Errorf("user_id not found in token claims")
 		}
