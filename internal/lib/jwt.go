@@ -8,9 +8,9 @@ import (
 )
 
 type JWTClaims struct {
-	UserId   string `json:"user_id"`
+	UserId   int64  `json:"user_id"`
 	UserName string `json:"username"`
-	RoleId   string `json:"role_id"`
+	RoleId   int64  `json:"role_id"`
 	Iss      string `json:"iss"`
 	Iat      int64  `json:"iat"`
 	Exp      int64  `json:"exp"`
@@ -35,37 +35,36 @@ func CreateJWT(claim JWTClaims, secretKey string, exp time.Duration, typ string)
 	return signedToken, nil
 }
 
-func GetUserIdFromAccessToken(token, secretKey string, issuer string) (int64, error) {
+func GetClaimsFromRefreshToken(token, secretKey string, issuer string) (JWTClaims, error) {
 	parsedToken, err := jwt.Parse(token,
 		func(_ *jwt.Token) (interface{}, error) { return []byte(secretKey), nil },
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 		jwt.WithIssuer(issuer),
 		jwt.WithExpirationRequired(),
 	)
+	res := JWTClaims{}
 	if err != nil {
-		return 0, err
+		return res, err
 	}
 
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
-		userIdFloat, ok := claims["user_id"].(string)
-		if !ok {
-			return 0, fmt.Errorf("user_id not found in token claims")
-		}
+		fmt.Println(claims)
 		if claims["typ"] != "access" {
-			return 0, fmt.Errorf("invalid token type")
+			return res, fmt.Errorf("invalid token type")
 		}
-		var userId int64
-		_, err := fmt.Sscan(userIdFloat, &userId)
-		if err != nil {
-			return 0, fmt.Errorf("invalid user_id format in token claims")
+		res.UserId = int64(claims["user_id"].(float64))
+		res.UserName = claims["user_name"].(string)
+		res.RoleId = int64(claims["role_id"].(float64))
+		if res.UserId == 0 {
+			return res, fmt.Errorf("user_id not found in token claims")
 		}
-		return userId, nil
+		return res, nil
 	} else {
-		return 0, fmt.Errorf("invalid token")
+		return res, fmt.Errorf("invalid token")
 	}
 }
 
-func GetUserIdFromRefreshToken(token, secretKey string, issuer string) (int64, error) {
+func GetUserIdFromAccessToken(token, secretKey string, issuer string) (int64, error) {
 	parsedToken, err := jwt.Parse(token,
 		func(_ *jwt.Token) (interface{}, error) { return []byte(secretKey), nil },
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),

@@ -88,7 +88,7 @@ const docTemplate = `{
             }
         },
         "/auth/refresh": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []

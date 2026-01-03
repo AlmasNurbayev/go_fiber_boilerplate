@@ -118,7 +118,7 @@ paths:
       tags:
       - Auth
   /auth/refresh:
-    get:
+    post:
       consumes:
       - application/json
       produces:

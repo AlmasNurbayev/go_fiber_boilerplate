@@ -11,7 +11,7 @@ type UserEntity struct {
 	Phone_number  null.String `db:"phone_number"`
 	Email         null.String `db:"email"`
 	Name          string      `db:"name"`
-	Password_hash string      `db:"password_hash"`
+	Password_hash null.String `db:"password_hash"`
 	Role_id       int64       `db:"role_id"`
 	Changed_date  time.Time   `db:"changed_date"`
 	Create_date   time.Time   `db:"create_date"`

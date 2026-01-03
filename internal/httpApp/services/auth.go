@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
@@ -12,6 +10,7 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
+	"github.com/guregu/null/v6"
 	"github.com/jinzhu/copier"
 )
 
@@ -56,7 +55,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 		Name:          user.Name,
 		Email:         user.Email,
 		Phone_number:  user.Phone_number,
-		Password_hash: hashedPassword,
+		Password_hash: null.StringFrom(hashedPassword),
 		Role_id:       3, // default role user TODO - перенести в таблицу настроек
 	})
 	if dbError != nil {
@@ -115,7 +114,7 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		userEntity = userEntityByPhone
 	}
 
-	err := lib.CheckPassword(userEntity.Password_hash, user.Password)
+	err := lib.CheckPassword(userEntity.Password_hash.String, user.Password)
 	if err != nil {
 		log.Warn("invalid login or password", slog.String("err", err.Error()))
 		return dto, errorsApp.ErrAuthentication.Error
@@ -135,9 +134,9 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 	dto.Role_name = role.Name
 
 	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
-		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
-		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		RoleId:   userEntity.Role_id,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
@@ -149,9 +148,9 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 	}
 
 	dto.RefreshToken, err = lib.CreateJWT(lib.JWTClaims{
-		UserId:   strconv.FormatInt(userEntity.Id, 10),
+		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
-		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		RoleId:   userEntity.Role_id,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
@@ -205,35 +204,16 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	log.Info(op)
 
 	dto := dto.AuthLoginResponse{}
-	userId, err := lib.GetUserIdFromRefreshToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
-	if err != nil || userId == 0 {
+	claims, err := lib.GetClaimsFromRefreshToken(token, s.cfg.AUTH_SECRET_KEY, s.cfg.SERVICE_NAME)
+	if err != nil || claims.UserId == 0 {
 		log.Warn("error get user id from token", slog.String("err", err.Error()))
 		return dto, err
 	}
 
-	userEntity, dbError := s.authStorage.GetUserById(ctx, userId)
-	if dbError != nil {
-		log.Warn("error get user by id", slog.String("err", dbError.Message))
-		return dto, dbError.Error
-	}
-
-	role, dbError := s.authStorage.GetRoleById(ctx, userEntity.Role_id)
-	if dbError != nil {
-		log.Warn("error get role by id", slog.String("err", dbError.Message))
-		return dto, dbError.Error
-	}
-
-	errCopy := copier.Copy(&dto, &userEntity)
-	if errCopy != nil {
-		log.Error("", slog.String("err", errCopy.Error()))
-		return dto, errors.New("internal error - " + errCopy.Error())
-	}
-	dto.Role_name = role.Name
-
 	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
-		UserId:   strconv.FormatInt(userEntity.Id, 10),
-		UserName: userEntity.Name,
-		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		UserId:   claims.UserId,
+		UserName: claims.UserName,
+		RoleId:   claims.RoleId,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
@@ -244,9 +224,9 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	}
 
 	dto.RefreshToken, err = lib.CreateJWT(lib.JWTClaims{
-		UserId:   strconv.FormatInt(userEntity.Id, 10),
-		UserName: userEntity.Name,
-		RoleId:   strconv.FormatInt(userEntity.Role_id, 10),
+		UserId:   claims.UserId,
+		UserName: claims.UserName,
+		RoleId:   claims.RoleId,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,

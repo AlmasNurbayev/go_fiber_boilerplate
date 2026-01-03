@@ -81,7 +81,7 @@
             }
         },
         "/auth/refresh": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []

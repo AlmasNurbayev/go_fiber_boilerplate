@@ -16,14 +16,6 @@ func (s *Storage) NewUser(ctx context.Context, user models.UserEntity) (models.U
 	op := "storage.NewUser"
 	log := s.log.With("op", op)
 
-	// искусственное замедление запроса
-	// var temp string
-	// err2 := pgxscan.Get(ctx, s.db, &temp, "SELECT pg_sleep(18)")
-	// if err2 != nil {
-	// 	s.log.Error("canceled query DB", "error", err2)
-	// 	return user, err2
-	// }
-
 	query := `INSERT INTO "users" (name, phone_number, email, password_hash, role_id) VALUES ($1, $2, $3, $4, $5) RETURNING *`
 
 	rows, err := s.Db.Query(ctx, query, user.Name, user.Phone_number, user.Email, user.Password_hash, user.Role_id)
@@ -74,6 +66,7 @@ func (s *Storage) GetUserById(ctx context.Context, id int64) (models.UserEntity,
 		log.Error(err.Error())
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user, &errorsApp.DbError{
+				Type:    "not_found",
 				Field:   "id",
 				Data:    id,
 				Message: "user not found",
