@@ -149,6 +149,7 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	res, err2 := h.service.Refresh(c, token)
 	if err2 != nil {
 		log.Warn(err2.Error())
+		// TODO differentiate errors - internal vs authentication
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 	}
 
