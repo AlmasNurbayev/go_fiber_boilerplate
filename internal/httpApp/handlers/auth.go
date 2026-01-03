@@ -86,8 +86,8 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 
 	body := dto.AuthLoginRequest{}
 	if err := c.Bind().Body(&body); err != nil {
-		return c.Status(errorsApp.ErrInternalError.Code).JSON(fiber.Map{
-			"error": "Некорректные данные: " + err.Error(),
+		return c.Status(401).JSON(fiber.Map{
+			"error": "not correct data: " + err.Error(),
 		})
 	}
 
@@ -97,7 +97,7 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		if err == errorsApp.ErrAuthentication.Error {
 			return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 		}
-		return c.Status(500).SendString(err.Error())
+		return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 	}
 
 	return c.Status(200).JSON(res)
@@ -151,7 +151,7 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	if err2 != nil {
 		log.Warn(err2.Error())
 		if strings.Contains(err2.Error(), "internal error") {
-			return c.Status(500).SendString("internal error")
+			return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 		}
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 	}
