@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -209,6 +210,9 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 		log.Warn("error get user id from token", slog.String("err", err.Error()))
 		return dto, err
 	}
+	dto.Id = claims.UserId
+	dto.Name = claims.UserName
+	dto.Role_name = "id:" + fmt.Sprint(claims.RoleId)
 
 	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
 		UserId:   claims.UserId,
