@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
@@ -149,7 +150,9 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	res, err2 := h.service.Refresh(c, token)
 	if err2 != nil {
 		log.Warn(err2.Error())
-		// TODO differentiate errors - internal vs authentication
+		if strings.Contains(err2.Error(), "internal error") {
+			return c.Status(500).SendString("internal error")
+		}
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 	}
 

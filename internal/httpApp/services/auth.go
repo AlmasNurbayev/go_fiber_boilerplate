@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strconv"
 	"time"
@@ -225,7 +226,7 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	errCopy := copier.Copy(&dto, &userEntity)
 	if errCopy != nil {
 		log.Error("", slog.String("err", errCopy.Error()))
-		return dto, errCopy
+		return dto, errors.New("internal error - " + errCopy.Error())
 	}
 	dto.Role_name = role.Name
 
@@ -237,9 +238,8 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
 		"access")
-
 	if err != nil {
-		log.Error("error generate access token", slog.String("err", err.Error()))
+		log.Error("internal error - generate access token", slog.String("err", err.Error()))
 		return dto, err
 	}
 
@@ -251,9 +251,8 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
 		"refresh")
-
 	if err != nil {
-		log.Error("error generate refresh token", slog.String("err", err.Error()))
+		log.Error("internal error - error generate refresh token", slog.String("err", err.Error()))
 		return dto, err
 	}
 
