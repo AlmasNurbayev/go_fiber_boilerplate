@@ -8,6 +8,7 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
+	"github.com/jinzhu/copier"
 )
 
 type UserService struct {
@@ -18,7 +19,7 @@ type UserService struct {
 
 type userStorage interface {
 	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
-	GetUserByNameStorage(ctx context.Context, name string) (models.UserEntity, error)
+	GetUserByNameStorage(ctx context.Context, name string) ([]models.UserEntity, error)
 }
 
 func NewUserService(log *slog.Logger,
@@ -40,11 +41,22 @@ func (s *UserService) GetUserByIdService(ctx context.Context, id int64) (dto.Use
 	return userDTO, nil
 }
 
-func (s *UserService) GetUserByNameService(ctx context.Context, name string) (dto.UserResponse, error) {
+func (s *UserService) GetUserByNameService(ctx context.Context, name string) (dto.UsersResponse, error) {
 	op := "services.GetUserByNameService"
 	log := s.log.With(slog.String("op", op))
 	log.Info(op)
 
-	userDTO := dto.UserResponse{}
-	return userDTO, nil
+	usersDTO := dto.UsersResponse{}
+
+	usersEntity, err := s.userStorage.GetUserByNameStorage(ctx, name)
+	if err != nil {
+		return usersDTO, err
+	}
+	errCopy := copier.Copy(&usersDTO.Users, &usersEntity)
+	if errCopy != nil {
+		log.Error("", slog.String("err", errCopy.Error()))
+		return usersDTO, errCopy
+	}
+
+	return usersDTO, nil
 }

@@ -157,6 +157,48 @@
                     }
                 }
             }
+        },
+        "/users/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Check auth token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UsersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "authentication failed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -255,6 +297,41 @@
                 },
                 "role_name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "almas@gmail.com"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "almas"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "+77012345678"
+                },
+                "role_name": {
+                    "type": "string",
+                    "example": "user"
+                }
+            }
+        },
+        "dto.UsersResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.UserResponse"
+                    }
                 }
             }
         }

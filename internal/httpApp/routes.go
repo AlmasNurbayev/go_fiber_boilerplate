@@ -7,6 +7,7 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/handlers"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/middleware"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/services"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/swagger/v2"
@@ -30,15 +31,11 @@ func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 	userService := services.NewUserService(log, storage, cfg)
 	userHandler := handlers.NewUserHandler(log, userService)
 
-	log.Info("GET /api/user")
-	api.Get("/user/search/", userHandler.GetUserSearch)
-
 	log.Info("GET /api/user/:id?")
 	api.Get("/user/:id?", userHandler.GetUserById)
 
-	log.Info("GET /api/user/search/")
-	api.Get("/user/search/", userHandler.GetUserSearch)
-
+	log.Info("GET /api/users")
+	api.Get("/users", middleware.RequireAuth(log, cfg), userHandler.GetUserSearch)
 }
 
 func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {

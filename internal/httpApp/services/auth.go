@@ -138,7 +138,8 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
 		RoleId:   userEntity.Role_id,
-		Iss:      s.cfg.SERVICE_NAME,
+		//Jti:      sessID,
+		Iss: s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
 		"access")
@@ -152,7 +153,8 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
 		RoleId:   userEntity.Role_id,
-		Iss:      s.cfg.SERVICE_NAME,
+		//Jti:      sessID,
+		Iss: s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
 		"refresh")

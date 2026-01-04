@@ -66,6 +66,30 @@ definitions:
       role_name:
         type: string
     type: object
+  dto.UserResponse:
+    properties:
+      email:
+        example: almas@gmail.com
+        type: string
+      id:
+        type: integer
+      name:
+        example: almas
+        type: string
+      phone_number:
+        example: "+77012345678"
+        type: string
+      role_name:
+        example: user
+        type: string
+    type: object
+  dto.UsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/dto.UserResponse'
+        type: array
+    type: object
 host: localhost:3199
 info:
   contact: {}
@@ -168,6 +192,32 @@ paths:
       summary: Register as user
       tags:
       - Auth
+  /users/search:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User name
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UsersResponse'
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Check auth token
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     in: header

@@ -91,6 +91,11 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		})
 	}
 
+	// sess := session.FromContext(c)
+	// if err := sess.Regenerate(); err != nil { // Prevents session fixation
+	// 	return err
+	// }
+
 	res, err := h.service.Login(c, body)
 	if err != nil {
 		log.Warn(err.Error())
@@ -99,6 +104,7 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		}
 		return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 	}
+	//sess.Set("authenticated", true)
 
 	return c.Status(200).JSON(res)
 }

@@ -13,7 +13,7 @@ import (
 
 type userServices interface {
 	GetUserByIdService(ctx context.Context, id int64) (dto.UserResponse, error)
-	GetUserByNameService(ctx context.Context, name string) (dto.UserResponse, error)
+	GetUserByNameService(ctx context.Context, name string) (dto.UsersResponse, error)
 }
 
 type UserHandler struct {
@@ -66,6 +66,15 @@ func (h *UserHandler) GetUserById(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
+// @Summary      Check auth token
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Security BearerAuth
+// @Param        name  query      string  true  "User name"
+// @Success      200      {object}  dto.UsersResponse
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /users/search [get]
 func (h *UserHandler) GetUserSearch(c fiber.Ctx) error {
 	op := "HttpHandlers.GetUserSearch"
 	log := h.log.With(slog.String("op", op))
@@ -82,7 +91,7 @@ func (h *UserHandler) GetUserSearch(c fiber.Ctx) error {
 	}
 
 	nameString := c.Query("name")
-	res := dto.UserResponse{}
+	res := dto.UsersResponse{}
 
 	if nameString != "" {
 		res, err = h.service.GetUserByNameService(c, nameString)

@@ -52,18 +52,28 @@ services:
     image: postgres:18.1-alpine3.23
     restart: always
     environment:
-      - TZ='Asia/Qyzylorda'
+      - TZ="Asia/Qyzylorda"
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_PORT=${POSTGRES_PORT}
     ports:
       # - '${HTTP_PORT}:${HTTP_PORT}'
-      - '${POSTGRES_PORT}:5432'
+      - "${POSTGRES_PORT}:5432"
     command: ['postgres', '-c', 'config_file=/etc/postgresql/postgresql.conf']
     volumes:
       - ./pg_conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./_volume_storage:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8.4.0-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./_volume_redis:/data
+    restart: unless-stopped
+
   #  networks:
   # cipo_bot_nats:
   #   image: nats:2.11.7-alpine3.22
