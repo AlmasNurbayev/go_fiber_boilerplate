@@ -66,6 +66,34 @@ definitions:
       role_name:
         type: string
     type: object
+  dto.AuthSession:
+    properties:
+      created_at:
+        type: string
+      ip:
+        type: string
+      jti:
+        type: string
+      role_id:
+        type: integer
+      user_agent:
+        type: string
+      user_email:
+        type: string
+      user_id:
+        type: integer
+      user_name:
+        type: string
+      user_phone_number:
+        type: string
+    type: object
+  dto.AuthSessionResponse:
+    properties:
+      sessions:
+        items:
+          $ref: '#/definitions/dto.AuthSession'
+        type: array
+    type: object
   dto.UserResponse:
     properties:
       email:
@@ -190,6 +218,32 @@ paths:
           schema:
             type: string
       summary: Register as user
+      tags:
+      - Auth
+  /auth/sessions/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthSessionResponse'
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get sessions
       tags:
       - Auth
   /users/search:

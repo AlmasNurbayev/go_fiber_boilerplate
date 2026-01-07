@@ -170,14 +170,15 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
-// @Summary      Refresh token
+// @Summary      Get sessions
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
 // @Security BearerAuth
-// @Success      200      {object}  dto.AuthLoginResponse
+// @Success      200      {object}  dto.AuthSessionResponse
+// @Param        id  path      string  true  "User id"
 // @Failure      401      {string}  string  "authentication failed"
-// @Router       /auth/refresh [post]
+// @Router       /auth/sessions/{id} [get]
 func (h *AuthHandler) AuthSessions(c fiber.Ctx) error {
 	op := "HttpHandlers.AuthSessions"
 	log := h.log.With(slog.String("op", op))
