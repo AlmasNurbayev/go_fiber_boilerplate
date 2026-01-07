@@ -10,17 +10,6 @@ import (
 
 func RequireAuth(log *slog.Logger, cfg *config.Config) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		// sess := session.FromContext(c)
-		// if sess == nil {
-		// 	return c.SendStatus(fiber.StatusUnauthorized)
-		// }
-		// log.Debug("ID: " + sess.ID())
-		// log.Debug("Authenticated: " + fmt.Sprintf("%v", sess.Get("authenticated")))
-		// Check if user is authenticated
-		// if sess.Get("authenticated") != true {
-		// 	log.Error("User is not authenticated")
-		// 	return c.SendStatus(fiber.StatusUnauthorized)
-		// }
 
 		token := ""
 		authHeader := c.Get("Authorization")
@@ -32,11 +21,8 @@ func RequireAuth(log *slog.Logger, cfg *config.Config) fiber.Handler {
 			log.Error("GetClaimsFromAccessToken error: ", err)
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
-		// if claims.Jti != sess.ID() {
-		// 	log.Error("Invalid session ID")
-		// 	return c.SendStatus(fiber.StatusUnauthorized)
-		// }
 		log.Debug("Claims: ", slog.Any("claims", claims))
+		c.Locals("user_id", claims.UserId)
 
 		return c.Next()
 	}

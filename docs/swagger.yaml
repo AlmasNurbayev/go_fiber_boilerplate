@@ -166,7 +166,7 @@ paths:
           description: authentication failed
           schema:
             type: string
-      summary: Login as user
+      summary: Login as user, returns access and refresh tokens
       tags:
       - Auth
   /auth/refresh:
@@ -186,7 +186,7 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Refresh token
+      summary: Check refresh token, returns new access and refresh tokens
       tags:
       - Auth
   /auth/register:
@@ -243,7 +243,7 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Get sessions
+      summary: Get sessions by user id, only user can get his own sessions
       tags:
       - Auth
   /auth/sessions/{jti}:
@@ -269,7 +269,7 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Revoke session
+      summary: Revoke session by jti, only user can revoke his own session
       tags:
       - Auth
   /users/search:

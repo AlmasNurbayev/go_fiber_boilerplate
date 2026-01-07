@@ -59,7 +59,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Login as user",
+                "summary": "Login as user, returns access and refresh tokens",
                 "parameters": [
                     {
                         "description": "Request body",
@@ -103,7 +103,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Refresh token",
+                "summary": "Check refresh token, returns new access and refresh tokens",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -181,7 +181,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Get sessions",
+                "summary": "Get sessions by user id, only user can get his own sessions",
                 "parameters": [
                     {
                         "type": "string",
@@ -223,7 +223,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Revoke session",
+                "summary": "Revoke session by jti, only user can revoke his own session",
                 "parameters": [
                     {
                         "type": "string",

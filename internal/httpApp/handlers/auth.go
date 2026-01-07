@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
@@ -16,8 +17,8 @@ type authService interface {
 	Login(context.Context, dto.AuthLoginRequest, string, string) (dto.AuthLoginResponse, error)
 	Hello(context.Context, string) (dto.AuthHelloResponse, error)
 	Refresh(context.Context, string) (dto.AuthLoginResponse, error)
-	Sessions(context.Context, string) (dto.AuthSessionResponse, error)
-	RevokeSession(context.Context, string) error
+	Sessions(context.Context, int64) (dto.AuthSessionResponse, error)
+	RevokeSession(fiber.Ctx, string) error
 }
 
 type AuthHandler struct {
@@ -68,7 +69,7 @@ func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 	return c.Status(201).JSON(res)
 }
 
-// @Summary      Login as user
+// @Summary      Login as user, returns access and refresh tokens
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
@@ -137,7 +138,7 @@ func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
-// @Summary      Refresh token
+// @Summary      Check refresh token, returns new access and refresh tokens
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
@@ -171,7 +172,7 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
-// @Summary      Get sessions
+// @Summary      Get sessions by user id, only user can get his own sessions
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
@@ -185,9 +186,22 @@ func (h *AuthHandler) AuthSessions(c fiber.Ctx) error {
 	log := h.log.With(slog.String("op", op))
 
 	idString := c.Params("id")
+	userId, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		log.Warn(err.Error())
+		return c.Status(400).SendString(err.Error())
+	}
+
+	// проверяем этот же ли запршивает
+	userIdFromContext := c.Locals("user_id").(int64)
+	if userId != userIdFromContext {
+		log.Warn("user id not match", slog.String("err", "user id not match"))
+		return c.Status(errorsApp.ErrForbidden.Code).SendString(errorsApp.ErrForbidden.Message)
+	}
+
 	res := dto.AuthSessionResponse{}
 
-	res, err2 := h.service.Sessions(c, idString)
+	res, err2 := h.service.Sessions(c, userId)
 	if err2 != nil {
 		log.Warn(err2.Error())
 		if strings.Contains(err2.Error(), "internal error") {
@@ -203,7 +217,7 @@ func (h *AuthHandler) AuthSessions(c fiber.Ctx) error {
 	return c.Status(200).JSON(res)
 }
 
-// @Summary      Revoke session
+// @Summary      Revoke session by jti, only user can revoke his own session
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
@@ -226,6 +240,9 @@ func (h *AuthHandler) RevokeSession(c fiber.Ctx) error {
 		}
 		if err == errorsApp.ErrSessionNotFound.Error {
 			return c.Status(401).SendString(errorsApp.ErrSessionNotFound.Message)
+		}
+		if err == errorsApp.ErrForbidden.Error {
+			return c.Status(403).SendString(errorsApp.ErrForbidden.Message)
 		}
 
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)

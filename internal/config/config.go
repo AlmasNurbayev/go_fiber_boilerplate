@@ -23,7 +23,7 @@ type Config struct {
 	REDIS_SESSION_DB int    `env:"REDIS_SESSION_DB,required"`
 
 	AUTH_SECRET_KEY               string `env:"AUTH_SECRET_KEY,required"  json:"-"` // для шифрования в БД
-	AUTH_ACCESS_TOKEN_EXP_MINUTES int    `env:"AUTH_ACCESS_TOKEN_EXP_HOURS"`
+	AUTH_ACCESS_TOKEN_EXP_MINUTES int    `env:"AUTH_ACCESS_TOKEN_EXP_MINUTES"`
 	AUTH_REFRESH_TOKEN_EXP_HOURS  int    `env:"AUTH_REFRESH_TOKEN_EXP_HOURS"`
 
 	HTTP_PORT                   string        `env:"HTTP_PORT,required"`

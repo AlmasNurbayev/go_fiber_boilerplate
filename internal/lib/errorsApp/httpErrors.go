@@ -63,4 +63,9 @@ var (
 		Code:    401,
 		Message: "session not found or expired",
 		Error:   errors.New("session not found or expired")}
+
+	ErrForbidden = HttpError{
+		Code:    403,
+		Message: "forbidden",
+		Error:   errors.New("forbidden")}
 )

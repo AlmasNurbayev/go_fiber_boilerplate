@@ -138,7 +138,6 @@ func (c *SessionStorage) DeleteSessionByJti(ctx context.Context, jti string) *er
 	}
 
 	var sessionData SessionData
-	fmt.Println("data", string(data))
 	err = json.Unmarshal(data, &sessionData)
 	if err != nil {
 		log.Error("error unmarshal session data", slog.String("err", err.Error()))

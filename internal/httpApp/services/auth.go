@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/guregu/null/v6"
 	"github.com/jinzhu/copier"
@@ -297,25 +297,19 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	return dto, nil
 }
 
-func (s *AuthService) Sessions(ctx context.Context, idString string) (dto.AuthSessionResponse, error) {
+func (s *AuthService) Sessions(ctx context.Context, id int64) (dto.AuthSessionResponse, error) {
 	op := "services.Sessions"
 	log := s.log.With(slog.String("op", op))
 
 	response := dto.AuthSessionResponse{}
 
-	userId, err := strconv.ParseInt(idString, 10, 64)
-	if err != nil {
-		log.Warn("error parse id string", slog.String("err", err.Error()))
-		return response, errorsApp.ErrInternalError.Error
-	}
-
-	sessionData, err2 := s.sessionStorage.GetSessionsByUserId(ctx, userId)
+	sessionData, err2 := s.sessionStorage.GetSessionsByUserId(ctx, id)
 	if err2 != nil {
 		log.Warn("error get sessions by user id", slog.String("err", err2.Message))
 		return response, errorsApp.ErrSessionNotFound.Error
 	}
 
-	userData, err3 := s.authStorage.GetUserById(ctx, userId)
+	userData, err3 := s.authStorage.GetUserById(ctx, id)
 	if err3 != nil {
 		log.Warn("error get user by id", slog.Any("err", err3))
 		return response, errorsApp.ErrUserNotFound.Error
@@ -338,14 +332,29 @@ func (s *AuthService) Sessions(ctx context.Context, idString string) (dto.AuthSe
 	return response, nil
 }
 
-func (s *AuthService) RevokeSession(ctx context.Context, jtiString string) error {
+func (s *AuthService) RevokeSession(ctx fiber.Ctx, jtiString string) error {
 	op := "services.RevokeSession"
 	log := s.log.With(slog.String("op", op))
 
-	err := s.sessionStorage.DeleteSessionByJti(ctx, jtiString)
+	userId := ctx.Locals("user_id").(int64)
+	if userId == 0 {
+		log.Warn("user id not found", slog.String("err", "user id not found"))
+		return errorsApp.ErrAuthentication.Error
+	}
+	data, err := s.sessionStorage.GetSessionByJti(ctx, jtiString)
 	if err != nil {
+		log.Warn("error get session by jti", slog.String("err", err.Message))
+		return errorsApp.ErrAuthentication.Error
+	}
+	if data.UserID != userId {
+		log.Warn("jti user_id not match session user_id", slog.String("err", "jti user_id not match session user_id"))
+		return errorsApp.ErrForbidden.Error
+	}
+
+	err2 := s.sessionStorage.DeleteSessionByJti(ctx, jtiString)
+	if err2 != nil {
 		log.Warn("error delete session by jti", slog.String("err", err.Message))
-		switch err.Type {
+		switch err2.Type {
 		case "not_found":
 			return errorsApp.ErrSessionNotFound.Error
 		case "internal_error":
