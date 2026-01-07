@@ -65,6 +65,13 @@ func GetClaimsFromRefreshToken(token, secretKey string, issuer string) (JWTClaim
 			return res, fmt.Errorf("user_name not found or invalid")
 		}
 		res.UserName = userName
+
+		jti, ok := claims["jti"].(string)
+		if !ok {
+			return res, fmt.Errorf("jti not found or invalid")
+		}
+		res.Jti = jti
+
 		roleId, ok := claims["role_id"].(float64)
 		if !ok {
 			return res, fmt.Errorf("role_id not found or invalid")

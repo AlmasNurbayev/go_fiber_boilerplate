@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/AlmasNurbayev/go_fiber_boilerplate/docs"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/cache"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/handlers"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/middleware"
@@ -13,7 +14,7 @@ import (
 	"github.com/gofiber/swagger/v2"
 )
 
-func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
+func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, sessionStorage *cache.SessionStorage, log *slog.Logger, cfg *config.Config) {
 	cp := "registerRoutes"
 	log = log.With(slog.String("cp", cp))
 	log.Info("Register routes:")
@@ -23,7 +24,7 @@ func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, log *slog.Logg
 	log.Info("/api")
 	api := app.Group("/api")
 	RegisterUserRoutes(api, storage, log, cfg)
-	RegisterAuthRoutes(api, storage, log, cfg)
+	RegisterAuthRoutes(api, storage, sessionStorage, log, cfg)
 }
 
 func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
@@ -38,9 +39,9 @@ func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 	api.Get("/users", middleware.RequireAuth(log, cfg), userHandler.GetUserSearch)
 }
 
-func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
+func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStorage *cache.SessionStorage, log *slog.Logger, cfg *config.Config) {
 
-	authService := services.NewAuthService(log, storage, cfg)
+	authService := services.NewAuthService(log, storage, sessionStorage, cfg)
 	authHandler := handlers.NewAuthHandler(log, authService)
 
 	log.Info("POST /api/auth/register")
@@ -51,4 +52,6 @@ func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 	api.Get("/auth/hello", authHandler.AuthHello)
 	log.Info("POST /api/auth/refresh")
 	api.Post("/auth/refresh", authHandler.AuthRefresh)
+	log.Info("GET /api/auth/sessions/:id")
+	api.Get("/auth/sessions/:id", authHandler.AuthSessions)
 }

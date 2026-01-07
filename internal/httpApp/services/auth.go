@@ -4,21 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/cache"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
+	"github.com/google/uuid"
 	"github.com/guregu/null/v6"
 	"github.com/jinzhu/copier"
 )
 
 type AuthService struct {
-	log         *slog.Logger
-	authStorage authStorage
-	cfg         *config.Config
+	log            *slog.Logger
+	authStorage    authStorage
+	sessionStorage sessionStorage
+	cfg            *config.Config
 }
 
 type authStorage interface {
@@ -29,13 +33,22 @@ type authStorage interface {
 	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
 }
 
+type sessionStorage interface {
+	SaveSession(ctx context.Context, jti string, data cache.SessionData, ttlHours int) error
+	GetSessionByJti(ctx context.Context, jti string) (cache.SessionData, error)
+	GetSessionsByUserId(ctx context.Context, userId int64) ([]cache.SessionData, error)
+	DeleteSessionByJti(ctx context.Context, jti string) error
+}
+
 func NewAuthService(log *slog.Logger,
 	authStorage authStorage,
+	sessionStorage sessionStorage,
 	cfg *config.Config) *AuthService {
 	return &AuthService{
-		log:         log,
-		authStorage: authStorage,
-		cfg:         cfg,
+		log:            log,
+		authStorage:    authStorage,
+		sessionStorage: sessionStorage,
+		cfg:            cfg,
 	}
 }
 
@@ -79,7 +92,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 	return dto, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto.AuthLoginResponse, error) {
+func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip string, user_agent string) (dto.AuthLoginResponse, error) {
 	op := "services.Login"
 	log := s.log.With(slog.String("op", op))
 	log.Info(op)
@@ -134,14 +147,16 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 	}
 	dto.Role_name = role.Name
 
+	jti := uuid.New().String()
+
 	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
 		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
 		RoleId:   userEntity.Role_id,
-		//Jti:      sessID,
-		Iss: s.cfg.SERVICE_NAME,
+		Jti:      jti,
+		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
-		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
+		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_MINUTES)*time.Minute,
 		"access")
 
 	if err != nil {
@@ -153,14 +168,26 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest) (dto
 		UserId:   userEntity.Id,
 		UserName: userEntity.Name,
 		RoleId:   userEntity.Role_id,
-		//Jti:      sessID,
-		Iss: s.cfg.SERVICE_NAME,
+		Jti:      jti,
+		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
 		"refresh")
 
 	if err != nil {
 		log.Error("error generate refresh token", slog.String("err", err.Error()))
+		return dto, err
+	}
+
+	err = s.sessionStorage.SaveSession(ctx, jti, cache.SessionData{
+		Jti:       jti,
+		UserID:    userEntity.Id,
+		RoleID:    userEntity.Role_id,
+		UserAgent: user_agent,
+		IP:        ip,
+	}, s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)
+	if err != nil {
+		log.Error("error save session", slog.String("err", err.Error()))
 		return dto, err
 	}
 
@@ -212,6 +239,33 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 		log.Warn("error get user id from token", slog.String("err", err.Error()))
 		return dto, err
 	}
+
+	//Проверяем наличие JTI в Redis (Whitelist)
+	data, err := s.sessionStorage.GetSessionByJti(ctx, claims.Jti)
+	if err != nil {
+		log.Warn("error get session by jti", slog.String("err", err.Error()))
+		return dto, errorsApp.ErrSessionNotFound.Error
+	}
+	if data.UserID != claims.UserId {
+		log.Warn("refresh-token user_id not match session user_id", slog.String("err", err.Error()))
+		return dto, errorsApp.ErrSessionNotFound.Error
+	}
+
+	// удаляем старую сессию
+	err = s.sessionStorage.DeleteSessionByJti(ctx, claims.Jti)
+	if err != nil {
+		log.Warn("error delete session by jti", slog.String("err", err.Error()))
+		// ничего не делаем если не удалось удалить сессию
+	}
+
+	// сохраняем новую сессию с другим jti
+	newJti := uuid.NewString()
+	err = s.sessionStorage.SaveSession(ctx, newJti, data, s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)
+	if err != nil {
+		log.Error("error save session by jti", slog.String("err", err.Error()))
+		return dto, errorsApp.ErrInternalError.Error
+	}
+
 	dto.Id = claims.UserId
 	dto.Name = claims.UserName
 	dto.Role_name = "id:" + fmt.Sprint(claims.RoleId)
@@ -219,10 +273,11 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	dto.AccessToken, err = lib.CreateJWT(lib.JWTClaims{
 		UserId:   claims.UserId,
 		UserName: claims.UserName,
+		Jti:      newJti,
 		RoleId:   claims.RoleId,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
-		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_HOURS)*time.Hour,
+		time.Duration(s.cfg.AUTH_ACCESS_TOKEN_EXP_MINUTES)*time.Minute,
 		"access")
 	if err != nil {
 		log.Error("internal error - generate access token", slog.String("err", err.Error()))
@@ -233,6 +288,7 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 		UserId:   claims.UserId,
 		UserName: claims.UserName,
 		RoleId:   claims.RoleId,
+		Jti:      newJti,
 		Iss:      s.cfg.SERVICE_NAME,
 	}, s.cfg.AUTH_SECRET_KEY,
 		time.Duration(s.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS)*time.Hour,
@@ -243,4 +299,45 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	}
 
 	return dto, nil
+}
+
+func (s *AuthService) Sessions(ctx context.Context, idString string) (dto.AuthSessionResponse, error) {
+	op := "services.Sessions"
+	log := s.log.With(slog.String("op", op))
+	log.Info(op)
+	response := dto.AuthSessionResponse{}
+
+	userId, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		log.Warn("error parse id string", slog.String("err", err.Error()))
+		return response, errorsApp.ErrInternalError.Error
+	}
+
+	sessionData, err2 := s.sessionStorage.GetSessionsByUserId(ctx, userId)
+	if err2 != nil {
+		log.Warn("error get sessions by user id", slog.String("err", err2.Error()))
+		return response, errorsApp.ErrSessionNotFound.Error
+	}
+
+	userData, err3 := s.authStorage.GetUserById(ctx, userId)
+	if err3 != nil {
+		log.Warn("error get user by id", slog.Any("err", err3))
+		return response, errorsApp.ErrUserNotFound.Error
+	}
+
+	for _, session := range sessionData {
+		response.Sessions = append(response.Sessions, dto.AuthSession{
+			Jti:               session.Jti,
+			User_id:           session.UserID,
+			User_name:         userData.Name,
+			User_email:        userData.Email.String,
+			User_phone_number: userData.Phone_number.String,
+			Role_id:           session.RoleID,
+			User_agent:        session.UserAgent,
+			IP:                session.IP,
+			Created_at:        session.CreatedAt,
+		})
+	}
+
+	return response, nil
 }

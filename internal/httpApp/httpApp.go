@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/cache"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/middleware"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
@@ -18,10 +19,11 @@ type structValidator struct {
 }
 
 type HttpApp struct {
-	Log     *slog.Logger
-	Server  *fiber.App
-	Storage *storage.Storage
-	Cfg     *config.Config
+	Log            *slog.Logger
+	Server         *fiber.App
+	Storage        *storage.Storage
+	SessionStorage *cache.SessionStorage
+	Cfg            *config.Config
 }
 
 func (v *structValidator) Validate(out any) error {
@@ -45,6 +47,12 @@ func NewHttpApp(
 		return nil, err
 	}
 
+	sessionStorage, err := cache.InitSession(ctxDB, cfg.REDIS_HOST, cfg.REDIS_PORT, cfg.REDIS_SESSION_DB, log)
+	if err != nil {
+		log.Error("not init cache session")
+		return nil, err
+	}
+
 	server := fiber.New(fiber.Config{
 		StructValidator: &structValidator{validate: validator.New()},
 		ReadTimeout:     cfg.HTTP_TIMEOUT,
@@ -60,17 +68,18 @@ func NewHttpApp(
 
 	server.Use(middleware.PrometheusMiddleware(prometheus.CounterVec, prometheus.HistogramVec))
 
-	RegisterMainRoutes(server, storage, log, cfg)
+	RegisterMainRoutes(server, storage, sessionStorage, log, cfg)
 
 	server.Get("/healthz", func(c fiber.Ctx) error {
 		return c.Status(200).SendString("OK")
 	})
 
 	return &HttpApp{
-		Log:     log,
-		Server:  server,
-		Storage: storage,
-		Cfg:     cfg,
+		Log:            log,
+		Server:         server,
+		Storage:        storage,
+		SessionStorage: sessionStorage,
+		Cfg:            cfg,
 	}, nil
 }
 

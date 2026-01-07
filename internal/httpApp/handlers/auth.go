@@ -13,9 +13,10 @@ import (
 
 type authService interface {
 	Register(context.Context, dto.AuthRegisterRequest) (dto.AuthRegisterResponse, error)
-	Login(context.Context, dto.AuthLoginRequest) (dto.AuthLoginResponse, error)
+	Login(context.Context, dto.AuthLoginRequest, string, string) (dto.AuthLoginResponse, error)
 	Hello(context.Context, string) (dto.AuthHelloResponse, error)
 	Refresh(context.Context, string) (dto.AuthLoginResponse, error)
+	Sessions(context.Context, string) (dto.AuthSessionResponse, error)
 }
 
 type AuthHandler struct {
@@ -96,7 +97,7 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 	// 	return err
 	// }
 
-	res, err := h.service.Login(c, body)
+	res, err := h.service.Login(c, body, c.IP(), string(c.Get(fiber.HeaderUserAgent)))
 	if err != nil {
 		log.Warn(err.Error())
 		if err == errorsApp.ErrAuthentication.Error {
@@ -159,6 +160,41 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 		if strings.Contains(err2.Error(), "internal error") {
 			return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 		}
+		if err2 == errorsApp.ErrSessionNotFound.Error {
+			return c.Status(401).SendString(errorsApp.ErrSessionNotFound.Message)
+		}
+
+		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
+	}
+
+	return c.Status(200).JSON(res)
+}
+
+// @Summary      Refresh token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security BearerAuth
+// @Success      200      {object}  dto.AuthLoginResponse
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /auth/refresh [post]
+func (h *AuthHandler) AuthSessions(c fiber.Ctx) error {
+	op := "HttpHandlers.AuthSessions"
+	log := h.log.With(slog.String("op", op))
+
+	idString := c.Params("id")
+	res := dto.AuthSessionResponse{}
+
+	res, err2 := h.service.Sessions(c, idString)
+	if err2 != nil {
+		log.Warn(err2.Error())
+		if strings.Contains(err2.Error(), "internal error") {
+			return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
+		}
+		if err2 == errorsApp.ErrSessionNotFound.Error {
+			return c.Status(401).SendString(errorsApp.ErrSessionNotFound.Message)
+		}
+
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 	}
 

@@ -58,4 +58,9 @@ var (
 		Code:    401,
 		Message: "authentication failed",
 		Error:   errors.New("authentication failed")}
+
+	ErrSessionNotFound = HttpError{
+		Code:    401,
+		Message: "session not found or expired",
+		Error:   errors.New("session not found or expired")}
 )

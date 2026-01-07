@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/guregu/null/v6"
+import (
+	"time"
+
+	"github.com/guregu/null/v6"
+)
 
 type AuthRegisterRequest struct {
 	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty" swaggertype:"string" example:"+77012345678"`
@@ -35,4 +39,20 @@ type AuthHelloResponse struct {
 	Role_name    string `json:"role_name"`
 	Email        string `json:"email"`
 	Phone_number string `json:"phone_number"`
+}
+
+type AuthSession struct {
+	Jti               string    `json:"jti"`
+	User_id           int64     `json:"user_id"`
+	User_name         string    `json:"user_name"`
+	User_email        string    `json:"user_email"`
+	User_phone_number string    `json:"user_phone_number"`
+	Role_id           int64     `json:"role_id"`
+	User_agent        string    `json:"user_agent"`
+	IP                string    `json:"ip"`
+	Created_at        time.Time `json:"created_at"`
+}
+
+type AuthSessionResponse struct {
+	Sessions []AuthSession `json:"sessions"`
 }
