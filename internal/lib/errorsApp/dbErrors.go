@@ -1,7 +1,7 @@
 package errorsApp
 
 type DbError struct {
-	Type    string
+	Type    string // not_found, internal_error
 	Field   string
 	Data    any
 	Message string

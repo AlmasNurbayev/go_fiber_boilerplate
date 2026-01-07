@@ -17,6 +17,7 @@ type authService interface {
 	Hello(context.Context, string) (dto.AuthHelloResponse, error)
 	Refresh(context.Context, string) (dto.AuthLoginResponse, error)
 	Sessions(context.Context, string) (dto.AuthSessionResponse, error)
+	RevokeSession(context.Context, string) error
 }
 
 type AuthHandler struct {
@@ -200,4 +201,35 @@ func (h *AuthHandler) AuthSessions(c fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(res)
+}
+
+// @Summary      Revoke session
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security BearerAuth
+// @Success      200      string  "ok"
+// @Param        jti  path      string  true  "Session jti"
+// @Failure      401      {string}  string  "authentication failed"
+// @Router       /auth/sessions/{jti} [delete]
+func (h *AuthHandler) RevokeSession(c fiber.Ctx) error {
+	op := "HttpHandlers.RevokeSession"
+	log := h.log.With(slog.String("op", op))
+
+	jtiString := c.Params("jti")
+
+	err := h.service.RevokeSession(c, jtiString)
+	if err != nil {
+		log.Warn(err.Error())
+		if strings.Contains(err.Error(), "internal_error") {
+			return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
+		}
+		if err == errorsApp.ErrSessionNotFound.Error {
+			return c.Status(401).SendString(errorsApp.ErrSessionNotFound.Message)
+		}
+
+		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
+	}
+
+	return c.Status(200).SendString("ok")
 }

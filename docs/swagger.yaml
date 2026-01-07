@@ -246,6 +246,32 @@ paths:
       summary: Get sessions
       tags:
       - Auth
+  /auth/sessions/{jti}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session jti
+        in: path
+        name: jti
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "401":
+          description: authentication failed
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Revoke session
+      tags:
+      - Auth
   /users/search:
     get:
       consumes:

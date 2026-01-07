@@ -54,4 +54,6 @@ func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStora
 	api.Post("/auth/refresh", authHandler.AuthRefresh)
 	log.Info("GET /api/auth/sessions/:id")
 	api.Get("/auth/sessions/:id", authHandler.AuthSessions)
+	log.Info("DELETE /api/auth/sessions/:jti")
+	api.Delete("/auth/sessions/:jti", authHandler.RevokeSession)
 }
