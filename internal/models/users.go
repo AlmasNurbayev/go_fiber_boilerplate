@@ -7,12 +7,14 @@ import (
 )
 
 type UserEntity struct {
-	Id            int64       `db:"id"`
-	Phone_number  null.String `db:"phone_number"`
-	Email         null.String `db:"email"`
-	Name          string      `db:"name"`
-	Password_hash null.String `db:"password_hash"`
-	Role_id       int64       `db:"role_id"`
-	Changed_date  time.Time   `db:"changed_date"`
-	Create_date   time.Time   `db:"create_date"`
+	Id                int64       `db:"id"`
+	Phone_number      null.String `db:"phone_number"`
+	Email             null.String `db:"email"`
+	Name              string      `db:"name"`
+	Password_hash     null.String `db:"password_hash"`
+	Role_id           int64       `db:"role_id"`
+	Changed_date      time.Time   `db:"changed_date"`
+	Create_date       time.Time   `db:"create_date"`
+	Email_verified_at null.Time   `db:"email_verified_at"`
+	Phone_verified_at null.Time   `db:"phone_verified_at"`
 }

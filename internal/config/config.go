@@ -18,9 +18,10 @@ type Config struct {
 	POSTGRES_TIMEOUT  time.Duration `env:"POSTGRES_TIMEOUT,required"`
 	POSTGRES_HOST     string        `env:"POSTGRES_HOST,required"`
 
-	REDIS_HOST       string `env:"REDIS_HOST,required"`
-	REDIS_PORT       string `env:"REDIS_PORT,required"`
-	REDIS_SESSION_DB int    `env:"REDIS_SESSION_DB,required"`
+	REDIS_HOST            string `env:"REDIS_HOST,required"`
+	REDIS_PORT            string `env:"REDIS_PORT,required"`
+	REDIS_SESSION_DB      int    `env:"REDIS_SESSION_DB,required"`
+	REDIS_CONFIRMATION_DB int    `env:"REDIS_CONFIRMATION_DB,required"`
 
 	AUTH_SECRET_KEY               string `env:"AUTH_SECRET_KEY,required"  json:"-"` // для шифрования в БД
 	AUTH_ACCESS_TOKEN_EXP_MINUTES int    `env:"AUTH_ACCESS_TOKEN_EXP_MINUTES"`
