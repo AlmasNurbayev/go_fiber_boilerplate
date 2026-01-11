@@ -243,7 +243,7 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 		return dto, errorsApp.ErrSessionNotFound.Error
 	}
 	if data.UserID != claims.UserId {
-		log.Warn("refresh-token user_id not match session user_id", slog.String("err", err.Error()))
+		log.Warn("refresh-token user_id not match session user_id", slog.Int64("user_id", data.UserID), slog.Int64("claims_user_id", claims.UserId))
 		return dto, errorsApp.ErrSessionNotFound.Error
 	}
 
@@ -353,7 +353,7 @@ func (s *AuthService) RevokeSession(ctx fiber.Ctx, jtiString string) error {
 
 	err2 := s.sessionStorage.DeleteSessionByJti(ctx, jtiString)
 	if err2 != nil {
-		log.Warn("error delete session by jti", slog.String("err", err.Message))
+		log.Warn("error delete session by jti", slog.String("err", err2.Message))
 		switch err2.Type {
 		case "not_found":
 			return errorsApp.ErrSessionNotFound.Error
