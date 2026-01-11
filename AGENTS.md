@@ -2,6 +2,8 @@
 
 This file defines rules and expectations for AI agents working with this repository.
 
+Отвечай всегда на русском языке.
+
 ---
 
 ## 1. Project Overview
