@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/swagger/v2"
 )
 
-func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, sessionStorage *cache.SessionStorage, log *slog.Logger, cfg *config.Config) {
+func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, sessionStorage *cache.SessionStorage, otpStorage *cache.OtpStorage, log *slog.Logger, cfg *config.Config) {
 	cp := "registerRoutes"
 	log = log.With(slog.String("cp", cp))
 	log.Info("Register routes:")
@@ -24,7 +24,7 @@ func RegisterMainRoutes(app *fiber.App, storage *storage.Storage, sessionStorage
 	log.Info("/api")
 	api := app.Group("/api")
 	RegisterUserRoutes(api, storage, log, cfg)
-	RegisterAuthRoutes(api, storage, sessionStorage, log, cfg)
+	RegisterAuthRoutes(api, storage, sessionStorage, otpStorage, log, cfg)
 }
 
 func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Logger, cfg *config.Config) {
@@ -39,9 +39,9 @@ func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 	api.Get("/users", middleware.RequireAuth(log, cfg), userHandler.GetUserSearch)
 }
 
-func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStorage *cache.SessionStorage, log *slog.Logger, cfg *config.Config) {
+func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStorage *cache.SessionStorage, otpStorage *cache.OtpStorage, log *slog.Logger, cfg *config.Config) {
 
-	authService := services.NewAuthService(log, storage, sessionStorage, cfg)
+	authService := services.NewAuthService(log, storage, sessionStorage, otpStorage, cfg)
 	authHandler := handlers.NewAuthHandler(log, authService)
 
 	log.Info("POST /api/auth/register")
@@ -56,4 +56,8 @@ func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStora
 	api.Get("/auth/sessions/:id", middleware.RequireAuth(log, cfg), authHandler.AuthSessions)
 	log.Info("DELETE /api/auth/sessions/:jti")
 	api.Delete("/auth/sessions/:jti", middleware.RequireAuth(log, cfg), authHandler.RevokeSession)
+	log.Info("POST /api/auth/send-verify")
+	api.Post("/auth/send-verify", authHandler.SendVerify)
+	log.Info("POST /api/auth/confirm-verify")
+	api.Post("/auth/confirm-verify", authHandler.ConfirmVerify)
 }

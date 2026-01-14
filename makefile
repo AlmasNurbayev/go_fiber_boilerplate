@@ -1,6 +1,8 @@
 lint:
 	golangci-lint run ./...
 
+# генерация документации, требуется бинарный файл swag
+# go install github.com/swaggo/swag/cmd/swag@v1.16.6
 swag:
 	swag init -g main.go -d cmd/server,internal/httpApp/handlers --parseInternal --parseDependency -o ./docs
 

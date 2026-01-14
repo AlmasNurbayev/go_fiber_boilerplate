@@ -22,6 +22,7 @@ type AuthService struct {
 	log            *slog.Logger
 	authStorage    authStorage
 	sessionStorage sessionStorage
+	otpStorage     otpStorage
 	cfg            *config.Config
 }
 
@@ -40,14 +41,21 @@ type sessionStorage interface {
 	DeleteSessionByJti(ctx context.Context, jti string) *errorsApp.DbError
 }
 
+type otpStorage interface {
+	SaveOtp(ctx context.Context, data cache.OtpData, ttlMinutes int) *errorsApp.DbError
+	DeleteOtp(ctx context.Context, address string, typeM string) *errorsApp.DbError
+}
+
 func NewAuthService(log *slog.Logger,
 	authStorage authStorage,
 	sessionStorage sessionStorage,
+	otpStorage otpStorage,
 	cfg *config.Config) *AuthService {
 	return &AuthService{
 		log:            log,
 		authStorage:    authStorage,
 		sessionStorage: sessionStorage,
+		otpStorage:     otpStorage,
 		cfg:            cfg,
 	}
 }
@@ -56,12 +64,11 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 	op := "services.Register"
 	log := s.log.With(slog.String("op", op))
 
-	dto := dto.AuthRegisterResponse{}
-
+	response := dto.AuthRegisterResponse{}
 	hashedPassword, err := lib.HashPassword(user.Password)
 	if err != nil {
 		log.Error("error hash password", slog.String("err", err.Error()))
-		return dto, err
+		return response, err
 	}
 
 	entity, dbError := s.authStorage.NewUser(ctx, models.UserEntity{
@@ -73,22 +80,50 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 	})
 	if dbError != nil {
 		log.Warn("error create new user", slog.String("err", dbError.Message))
-		return dto, dbError.Error
+		return response, dbError.Error
 	}
 	role, dbError := s.authStorage.GetRoleById(ctx, entity.Role_id)
 
 	if dbError != nil {
 		log.Warn("error create new user", slog.String("err", dbError.Message))
-		return dto, dbError.Error
+		return response, dbError.Error
 	}
-	errCopy := copier.Copy(&dto, &entity)
+	errCopy := copier.Copy(&response, &entity)
 	if errCopy != nil {
 		log.Error("", slog.String("err", errCopy.Error()))
-		return dto, errCopy
+		return response, errCopy
 	}
-	dto.Role_name = role.Name
+	response.Role_name = role.Name
 
-	return dto, nil
+	// отправляем код подтверждения
+	switch user.ConfirmType {
+	case "phone":
+		errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
+			Type:    "phone",
+			Address: user.Phone_number.String,
+		})
+		if errSendVerify != nil {
+			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
+			return response, errSendVerify
+		}
+	case "email":
+		errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
+			Type:    "email",
+			Address: user.Email.String,
+		})
+		if errSendVerify != nil {
+			if errSendVerify == errorsApp.ErrAlreadyOtp.Error {
+				return response, errorsApp.ErrAlreadyOtp.Error
+			}
+			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
+			return response, errSendVerify
+		}
+	default:
+		log.Warn("invalid confirm type", slog.String("confirm_type", user.ConfirmType))
+		return response, errorsApp.ErrBadRequest.Error
+	}
+
+	return response, nil
 }
 
 func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip string, user_agent string) (dto.AuthLoginResponse, error) {
@@ -248,7 +283,7 @@ func (s *AuthService) Refresh(ctx context.Context, token string) (dto.AuthLoginR
 	}
 
 	// удаляем старую сессию
-	err3 := s.sessionStorage.DeleteSessionByJti(ctx, claims.Jti)
+	err3 := s.sessionStorage.DeleteSessionByJti(ctx, "jti:"+claims.Jti)
 	if err3 != nil {
 		log.Warn("error delete session by jti", slog.String("err", err3.Message))
 		// ничего не делаем если не удалось удалить сессию
@@ -302,6 +337,7 @@ func (s *AuthService) Sessions(ctx context.Context, id int64) (dto.AuthSessionRe
 	log := s.log.With(slog.String("op", op))
 
 	response := dto.AuthSessionResponse{}
+	response.Sessions = make([]dto.AuthSession, 0)
 
 	sessionData, err2 := s.sessionStorage.GetSessionsByUserId(ctx, id)
 	if err2 != nil {
@@ -351,7 +387,7 @@ func (s *AuthService) RevokeSession(ctx fiber.Ctx, jtiString string) error {
 		return errorsApp.ErrForbidden.Error
 	}
 
-	err2 := s.sessionStorage.DeleteSessionByJti(ctx, jtiString)
+	err2 := s.sessionStorage.DeleteSessionByJti(ctx, "jti:"+jtiString)
 	if err2 != nil {
 		log.Warn("error delete session by jti", slog.String("err", err2.Message))
 		switch err2.Type {

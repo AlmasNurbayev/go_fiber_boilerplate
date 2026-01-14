@@ -1,2 +1,2 @@
-ALTER TABLE users ALTER COLUMN email_verified_at TIMESTAMPTZ;
-ALTER TABLE users ALTER COLUMN phone_verified_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN phone_verified_at TIMESTAMPTZ;

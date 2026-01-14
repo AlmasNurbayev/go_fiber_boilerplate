@@ -15,6 +15,34 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/confirm-verify": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Send verify code to user address",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthConfirmVerifyRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/hello": {
             "get": {
                 "security": [
@@ -165,6 +193,34 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/send-verify": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Verify user addresses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthSendVerifyRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "authentication failed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/sessions/{id}": {
             "get": {
                 "security": [
@@ -293,6 +349,34 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AuthConfirmVerifyRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "code",
+                "type",
+                "user_id"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "+77012345678"
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6
+                },
+                "type": {
+                    "type": "string",
+                    "example": "phone"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
         "dto.AuthHelloResponse": {
             "type": "object",
             "properties": {
@@ -356,10 +440,15 @@ const docTemplate = `{
         "dto.AuthRegisterRequest": {
             "type": "object",
             "required": [
+                "confirm_type",
                 "name",
                 "password"
             ],
             "properties": {
+                "confirm_type": {
+                    "type": "string",
+                    "example": "phone or email"
+                },
                 "email": {
                     "type": "string",
                     "example": "test@mail.com"
@@ -388,6 +477,23 @@ const docTemplate = `{
                 },
                 "role_name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.AuthSendVerifyRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "type"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "+77012345678"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "phone"
                 }
             }
         },

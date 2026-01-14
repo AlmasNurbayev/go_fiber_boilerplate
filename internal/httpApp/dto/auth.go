@@ -10,6 +10,7 @@ type AuthRegisterRequest struct {
 	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty" swaggertype:"string" example:"+77012345678"`
 	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty" swaggertype:"string" example:"test@mail.com"`
 	Name         string      `json:"name" validate:"required"`
+	ConfirmType  string      `json:"confirm_type" validate:"required" swaggertype:"string" example:"phone or email"`
 	Password     string      `json:"password" validate:"required,min=8"`
 }
 
@@ -55,4 +56,16 @@ type AuthSession struct {
 
 type AuthSessionResponse struct {
 	Sessions []AuthSession `json:"sessions"`
+}
+
+type AuthSendVerifyRequest struct {
+	Type    string `json:"type" validate:"required" swaggertype:"string" example:"phone"`
+	Address string `json:"address" validate:"required" swaggertype:"string" example:"+77012345678"`
+}
+
+type AuthConfirmVerifyRequest struct {
+	UserID  int64  `json:"user_id" validate:"required" swaggertype:"integer" example:"1"`
+	Type    string `json:"type" validate:"required" swaggertype:"string" example:"phone"`
+	Address string `json:"address" validate:"required" swaggertype:"string" example:"+77012345678"`
+	Code    string `json:"code" validate:"required,min=6,max=6"`
 }

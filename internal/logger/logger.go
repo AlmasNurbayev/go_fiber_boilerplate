@@ -16,7 +16,7 @@ const (
 // InitLogger initializes a logger based on the environment.
 //
 // It takes a string parameter 'env' and returns a pointer to slog.Logger.
-func InitLogger(env string, path string) *slog.Logger {
+func InitLogger(env string, path string) (*slog.Logger, *os.File) {
 	//var log *slog.Logger
 	if env == "" || path == "" {
 		panic("env and path parameters cannot be empty")
@@ -26,12 +26,6 @@ func InitLogger(env string, path string) *slog.Logger {
 	if err != nil {
 		panic("cannot open error.log: " + err.Error())
 	}
-	defer func() {
-		err := errFile.Close()
-		if err != nil {
-			panic("cannot close error.log: " + err.Error())
-		}
-	}()
 
 	var handler slog.Handler
 	stdout := os.Stdout
@@ -58,7 +52,7 @@ func InitLogger(env string, path string) *slog.Logger {
 	default:
 		panic("unknown environment: " + env) // ← ДОБАВИТЬ
 	}
-	return slog.New(handler)
+	return slog.New(handler), errFile
 }
 
 func Err(err error) slog.Attr {

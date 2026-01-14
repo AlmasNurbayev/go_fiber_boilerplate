@@ -30,7 +30,7 @@ func main() {
 	// ключевые сообщения дублируем и в консоль и в логгер (он может писать в файл)
 	fmt.Println("============ start main ============")
 	cfg := config.Mustload(configEnv)
-	Log := logger.InitLogger(cfg.ENV, cfg.LOG_ERROR_PATH)
+	Log, errFile := logger.InitLogger(cfg.ENV, cfg.LOG_ERROR_PATH)
 
 	prometheus := lib.NewPromRegistry(Log)
 	mux := http.NewServeMux()
@@ -62,7 +62,12 @@ func main() {
 	fmt.Println("received signal " + signalString.String())
 
 	httpFiber.Stop()
+	err2 := errFile.Close()
+	if err2 != nil {
+		Log.Warn("error close err file", slog.String("err", err2.Error()))
+	}
+	Log.Info("err file closed")
+
 	Log.Info("http server stopped")
 	fmt.Println("============ http server stopped ============")
-
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
@@ -38,8 +39,8 @@ func (c *SessionStorage) SaveSession(ctx context.Context, jti string, data Sessi
 	}
 
 	pipe := c.RDB.TxPipeline()
-	pipe.Set(ctx, jti, jsonData, time.Duration(ttlHours)*time.Hour).Err()
-	pipe.SAdd(ctx, strconv.FormatInt(data.UserID, 10), jti).Err()
+	pipe.Set(ctx, "jti:"+jti, jsonData, time.Duration(ttlHours)*time.Hour).Err()
+	pipe.SAdd(ctx, "user_id:"+strconv.FormatInt(data.UserID, 10), jti).Err()
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		log.Error("error save session", slog.String("err", err.Error()))
@@ -58,7 +59,7 @@ func (c *SessionStorage) GetSessionByJti(ctx context.Context, jti string) (Sessi
 	op := "cache.SessionStorage.GetSessionByJti"
 	log := c.log.With(slog.String("op", op))
 
-	val, err := c.RDB.Get(ctx, jti).Result()
+	val, err := c.RDB.Get(ctx, "jti:"+jti).Result()
 	if err != nil {
 		log.Error("error get session by jti", slog.String("err", err.Error()))
 		return SessionData{}, &errorsApp.DbError{
@@ -88,7 +89,7 @@ func (c *SessionStorage) GetSessionsByUserId(ctx context.Context, userId int64) 
 	op := "cache.SessionStorage.GetSessionByJti"
 	log := c.log.With(slog.String("op", op))
 
-	indexKey := fmt.Sprintf("%d", userId)
+	indexKey := "user_id:" + fmt.Sprintf("%d", userId)
 
 	jtis, err := c.RDB.SMembers(ctx, indexKey).Result()
 	if err != nil {
@@ -101,10 +102,10 @@ func (c *SessionStorage) GetSessionsByUserId(ctx context.Context, userId int64) 
 		}
 	}
 
-	var sessions []SessionData
+	sessions := make([]SessionData, 0)
 
 	for _, jti := range jtis {
-		sessionKey := jti
+		sessionKey := "jti:" + jti
 		raw, err := c.RDB.Get(ctx, sessionKey).Bytes()
 		if err != nil {
 			log.Error("error get session by jti", slog.String("err", err.Error()))
@@ -148,11 +149,13 @@ func (c *SessionStorage) DeleteSessionByJti(ctx context.Context, jti string) *er
 			Error:   err,
 		}
 	}
-	userIndexKey := fmt.Sprintf("%d", sessionData.UserID)
+	userIndexKey := "user_id:" + fmt.Sprintf("%d", sessionData.UserID)
 
 	pipe := c.RDB.TxPipeline()
 	pipe.Del(ctx, jti)
-	pipe.SRem(ctx, userIndexKey, jti)
+	// в содержимом второго индекса удаляем jti
+	cleanedJti := strings.ReplaceAll(jti, "jti:", "")
+	pipe.SRem(ctx, userIndexKey, cleanedJti)
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {

@@ -68,4 +68,9 @@ var (
 		Code:    403,
 		Message: "forbidden",
 		Error:   errors.New("forbidden")}
+
+	ErrAlreadyOtp = HttpError{
+		Code:    400,
+		Message: "otp already sent, wait TTL",
+		Error:   errors.New("otp already sent, wait TTL")}
 )
