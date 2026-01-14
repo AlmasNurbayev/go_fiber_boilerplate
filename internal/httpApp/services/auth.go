@@ -44,6 +44,7 @@ type sessionStorage interface {
 type otpStorage interface {
 	SaveOtp(ctx context.Context, data cache.OtpData, ttlMinutes int) *errorsApp.DbError
 	DeleteOtp(ctx context.Context, address string, typeM string) *errorsApp.DbError
+	GetOtp(ctx context.Context, address string, typeM string) (cache.OtpData, *errorsApp.DbError)
 }
 
 func NewAuthService(log *slog.Logger,
@@ -159,6 +160,12 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip s
 			return dto, dbError.Error
 		}
 		userEntity = userEntityByPhone
+	}
+
+	if !userEntity.Email_verified_at.Valid &&
+		!userEntity.Phone_verified_at.Valid {
+		log.Warn("user not verified", slog.String("name", userEntity.Name))
+		return dto, errorsApp.ErrVerifyNotFound.Error
 	}
 
 	err := lib.CheckPassword(userEntity.Password_hash.String, user.Password)

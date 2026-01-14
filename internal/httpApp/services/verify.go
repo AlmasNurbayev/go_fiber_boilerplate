@@ -25,6 +25,30 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 		return errorsApp.ErrBadRequest.Error
 	}
 
+	// проверяем существует ли пользователь
+	if body.Type == "email" {
+		user, err := s.authStorage.GetUserByEmail(ctx, body.Address)
+		if err != nil {
+			log.Warn("error get user by email", slog.String("err", err.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+		if user.Id == 0 {
+			log.Warn("user not found by email", slog.String("address", body.Address))
+			return errorsApp.ErrAuthentication.Error
+		}
+	}
+	if body.Type == "phone" {
+		user, err := s.authStorage.GetUserByPhoneNumber(ctx, body.Address)
+		if err != nil {
+			log.Warn("error get user by phone", slog.String("err", err.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+		if user.Id == 0 {
+			log.Warn("user not found by phone", slog.String("address", body.Address))
+			return errorsApp.ErrAuthentication.Error
+		}
+	}
+
 	errDeleteOtp := s.otpStorage.DeleteOtp(ctx, body.Address, body.Type)
 	if errDeleteOtp != nil {
 		log.Warn("error delete otp", slog.String("err", errDeleteOtp.Message))
@@ -62,6 +86,39 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 			}
 		}()
 	}
+
+	return nil
+}
+
+func (s *AuthService) ConfirmVerify(ctx context.Context, body dto.AuthConfirmVerifyRequest) error {
+	op := "services.ConfirmVerify"
+	log := s.log.With(slog.String("op", op))
+
+	if body.Type != "phone" && body.Type != "email" {
+		log.Warn("invalid type", slog.String("type", body.Type))
+		return errorsApp.ErrBadRequest.Error
+	}
+	if body.Address == "" {
+		log.Warn("address is empty", slog.String("type", body.Type))
+		return errorsApp.ErrBadRequest.Error
+	}
+
+	if body.Code == "" {
+		log.Warn("code is empty", slog.String("type", body.Type))
+		return errorsApp.ErrBadRequest.Error
+	}
+
+	otpData, err := s.otpStorage.GetOtp(ctx, body.Address, body.Type)
+	if err != nil {
+		log.Warn("error get otp", slog.String("err", err.Message))
+		return errorsApp.ErrInternalError.Error
+	}
+	if otpData.Otp != body.Code {
+		log.Warn("invalid otp", slog.String("otp", body.Code))
+		return errorsApp.ErrAuthentication.Error
+	}
+
+	// TODO update users verify timestamp
 
 	return nil
 }

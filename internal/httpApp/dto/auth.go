@@ -64,7 +64,7 @@ type AuthSendVerifyRequest struct {
 }
 
 type AuthConfirmVerifyRequest struct {
-	UserID  int64  `json:"user_id" validate:"required" swaggertype:"integer" example:"1"`
+	//UserID  int64  `json:"user_id" validate:"required" swaggertype:"integer" example:"1"`
 	Type    string `json:"type" validate:"required" swaggertype:"string" example:"phone"`
 	Address string `json:"address" validate:"required" swaggertype:"string" example:"+77012345678"`
 	Code    string `json:"code" validate:"required,min=6,max=6"`

@@ -20,7 +20,7 @@ type authService interface {
 	Sessions(context.Context, int64) (dto.AuthSessionResponse, error)
 	RevokeSession(fiber.Ctx, string) error
 	SendVerify(context.Context, dto.AuthSendVerifyRequest) error
-	//ConfirmVerify(context.Context, dto.AuthConfirmVerifyRequest) error
+	ConfirmVerify(context.Context, dto.AuthConfirmVerifyRequest) error
 }
 
 type AuthHandler struct {
@@ -109,6 +109,9 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		log.Warn(err.Error())
 		if err == errorsApp.ErrAuthentication.Error {
 			return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
+		}
+		if err == errorsApp.ErrVerifyNotFound.Error {
+			return c.Status(401).SendString(errorsApp.ErrVerifyNotFound.Message)
 		}
 		return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 	}
@@ -313,6 +316,12 @@ func (h *AuthHandler) ConfirmVerify(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "not correct data: " + err.Error(),
 		})
+	}
+
+	err2 := h.service.ConfirmVerify(c, body)
+	if err2 != nil {
+		log.Warn(err2.Error())
+		return c.Status(400).SendString(err2.Error())
 	}
 
 	return c.Status(200).SendString("ok")

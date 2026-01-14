@@ -10,16 +10,14 @@ definitions:
         minLength: 6
         type: string
       type:
+        description: UserID  int64  `json:"user_id" validate:"required" swaggertype:"integer"
+          example:"1"`
         example: phone
         type: string
-      user_id:
-        example: 1
-        type: integer
     required:
     - address
     - code
     - type
-    - user_id
     type: object
   dto.AuthHelloResponse:
     properties:

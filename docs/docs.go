@@ -354,8 +354,7 @@ const docTemplate = `{
             "required": [
                 "address",
                 "code",
-                "type",
-                "user_id"
+                "type"
             ],
             "properties": {
                 "address": {
@@ -368,12 +367,9 @@ const docTemplate = `{
                     "minLength": 6
                 },
                 "type": {
+                    "description": "UserID  int64  ` + "`" + `json:\"user_id\" validate:\"required\" swaggertype:\"integer\" example:\"1\"` + "`" + `",
                     "type": "string",
                     "example": "phone"
-                },
-                "user_id": {
-                    "type": "integer",
-                    "example": 1
                 }
             }
         },

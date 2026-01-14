@@ -111,3 +111,38 @@ func (c *OtpStorage) DeleteOtp(
 	}
 	return nil
 }
+
+func (c *OtpStorage) GetOtp(
+	ctx context.Context,
+	address string,
+	typeM string) (OtpData, *errorsApp.DbError) {
+
+	op := "cache.OtpStorage.GetOtp"
+	log := c.log.With(slog.String("op", op))
+
+	otpData := OtpData{}
+	key := fmt.Sprintf("otp:%s:%s", typeM, address)
+
+	data, err := c.RDB.Get(ctx, key).Result()
+	if err != nil {
+		log.Warn("get otp", slog.Any("err", err))
+		return otpData, &errorsApp.DbError{
+			Type:    "internal_error",
+			Field:   "data",
+			Message: "error or not found get otp",
+			Error:   err,
+		}
+	}
+	err2 := json.Unmarshal([]byte(data), &otpData)
+	if err2 != nil {
+		log.Error("error unmarshal otp data", slog.String("err", err2.Error()))
+		return otpData, &errorsApp.DbError{
+			Type:    "internal_error",
+			Field:   "data",
+			Message: "internal error unmarshal otp data",
+			Error:   err2,
+		}
+	}
+
+	return otpData, nil
+}
