@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
@@ -126,4 +127,49 @@ func (s *Storage) GetUserByPhoneNumber(ctx context.Context, phone_number string)
 		return user, mapPgError(err)
 	}
 	return user, nil
+}
+
+func (s *Storage) UpdateUserEmailVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError {
+	op := "storage.UpdateUserEmailVerifyTimestamp"
+	log := s.log.With("op", op)
+
+	query := `UPDATE "users" SET email_verified_at = $1 WHERE id = $2 RETURNING *`
+
+	_, err := s.Db.Exec(ctx, query, time.Now(), id)
+	if err != nil {
+		log.Error(err.Error())
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &errorsApp.DbError{
+				Type:    "not_found",
+				Field:   "id",
+				Data:    id,
+				Message: "user not found",
+				Error:   errors.New("user with id " + strconv.FormatInt(id, 10) + " not found"),
+			}
+		}
+		return mapPgError(err)
+	}
+	return nil
+}
+
+func (s *Storage) UpdateUserPhoneVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError {
+	op := "storage.UpdateUserPhoneVerifyTimestamp"
+	log := s.log.With("op", op)
+	query := `UPDATE "users" SET phone_verified_at = $1 WHERE id = $2 RETURNING *`
+
+	_, err := s.Db.Exec(ctx, query, time.Now(), id)
+	if err != nil {
+		log.Error(err.Error())
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &errorsApp.DbError{
+				Type:    "not_found",
+				Field:   "id",
+				Data:    id,
+				Message: "user not found",
+				Error:   errors.New("user with id " + strconv.FormatInt(id, 10) + " not found"),
+			}
+		}
+		return mapPgError(err)
+	}
+	return nil
 }

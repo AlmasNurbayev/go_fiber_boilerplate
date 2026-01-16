@@ -60,8 +60,11 @@ func NewHttpApp(
 		return nil, err
 	}
 
+	validator := validator.New()
+	validator.RegisterValidation("phoneKZ", lib.PhoneValidatorKZ)
+
 	server := fiber.New(fiber.Config{
-		StructValidator: &structValidator{validate: validator.New()},
+		StructValidator: &structValidator{validate: validator},
 		ReadTimeout:     cfg.HTTP_TIMEOUT,
 		WriteTimeout:    cfg.HTTP_TIMEOUT,
 		IdleTimeout:     cfg.HTTP_TIMEOUT,

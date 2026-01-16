@@ -73,7 +73,7 @@ definitions:
         minLength: 8
         type: string
       phone_number:
-        example: "+77012345678"
+        example: "77012345678"
         type: string
     required:
     - confirm_type

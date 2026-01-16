@@ -458,7 +458,7 @@ const docTemplate = `{
                 },
                 "phone_number": {
                     "type": "string",
-                    "example": "+77012345678"
+                    "example": "77012345678"
                 }
             }
         },

@@ -30,8 +30,12 @@ type Config struct {
 
 	SMTP_HOST       string `env:"SMTP_HOST,required"`
 	SMTP_PORT       int    `env:"SMTP_PORT,required"`
-	SMTP_PASSWORD   string `env:"SMTP_PASSWORD,required"`
+	SMTP_PASSWORD   string `env:"SMTP_PASSWORD,required" json:"-"`
 	SMTP_FROM_EMAIL string `env:"SMTP_FROM_EMAIL,required"`
+
+	SMSC_HOST     string `env:"SMSC_HOST,required"`
+	SMSC_USER     string `env:"SMSC_USER,required"`
+	SMSC_PASSWORD string `env:"SMSC_PASSWORD,required" json:"-"`
 
 	HTTP_PORT                   string        `env:"HTTP_PORT,required"`
 	HTTP_TIMEOUT                time.Duration `env:"HTTP_TIMEOUT,required"`

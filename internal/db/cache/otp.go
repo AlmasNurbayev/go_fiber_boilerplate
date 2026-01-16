@@ -30,7 +30,7 @@ func InitOtp(ctx context.Context, host string, port string, number int, log *slo
 		return nil, fmt.Errorf("failed to connect to Redis: %v", err)
 	}
 
-	log.Info("Redis session storage initialized")
+	log.Info("Redis OTP storage initialized")
 
 	return &OtpStorage{RDB: RDB, log: log}, nil
 }

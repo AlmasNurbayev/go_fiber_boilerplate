@@ -74,6 +74,14 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 
 	if body.Type == "phone" {
 		log.Info("send verify code to user", slog.String("body", body.Address))
+		go func() {
+			err := notifications.SMSC_SendSms(s.cfg, s.log, body.Address, "Your verify code is: "+otp)
+			if err != nil {
+				log.Warn("error send verify code to user", slog.String("err", err.Error()))
+			} else {
+				log.Info("send verify code to user", slog.String("body", body.Address))
+			}
+		}()
 	}
 	if body.Type == "email" {
 		// Отправляем email асинхронно, чтобы ошибки не блокировали основной поток
@@ -118,7 +126,42 @@ func (s *AuthService) ConfirmVerify(ctx context.Context, body dto.AuthConfirmVer
 		return errorsApp.ErrAuthentication.Error
 	}
 
-	// TODO update users verify timestamp
+	if body.Type == "phone" {
+		// сначала ищем пользователя по телефону
+		user, err := s.authStorage.GetUserByPhoneNumber(ctx, body.Address)
+		if err != nil {
+			log.Warn("error get user by phone", slog.String("err", err.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+		if user.Id == 0 {
+			log.Warn("user not found by phone", slog.String("address", body.Address))
+			return errorsApp.ErrAuthentication.Error
+		}
+		// если пользователь найден, обновляем время верификации
+		err2 := s.authStorage.UpdateUserPhoneVerifyTimestamp(ctx, user.Id)
+		if err2 != nil {
+			log.Warn("error update user phone verify timestamp", slog.String("err", err.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+	}
+	if body.Type == "email" {
+		// сначала ищем пользователя по email
+		user, err := s.authStorage.GetUserByEmail(ctx, body.Address)
+		if err != nil {
+			log.Warn("error get user by email", slog.String("err", err.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+		if user.Id == 0 {
+			log.Warn("user not found by email", slog.String("address", body.Address))
+			return errorsApp.ErrAuthentication.Error
+		}
+		// если пользователь найден, обновляем время верификации
+		err2 := s.authStorage.UpdateUserEmailVerifyTimestamp(ctx, user.Id)
+		if err2 != nil {
+			log.Warn("error update user email verify timestamp", slog.String("err", err2.Message))
+			return errorsApp.ErrInternalError.Error
+		}
+	}
 
 	return nil
 }

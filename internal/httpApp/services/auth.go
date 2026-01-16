@@ -32,6 +32,8 @@ type authStorage interface {
 	GetUserByEmail(ctx context.Context, email string) (models.UserEntity, *errorsApp.DbError)
 	GetUserByPhoneNumber(ctx context.Context, phone_number string) (models.UserEntity, *errorsApp.DbError)
 	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
+	UpdateUserEmailVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError
+	UpdateUserPhoneVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError
 }
 
 type sessionStorage interface {
@@ -134,6 +136,7 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip s
 	dto := dto.AuthLoginResponse{}
 	userEntity := models.UserEntity{}
 
+	// проверяем наличие пользователя по email
 	if user.Email.Valid {
 		log.Debug("login with email", slog.String("email", user.Email.String))
 		userEntityByEmail, dbError := s.authStorage.GetUserByEmail(ctx, user.Email.String)
@@ -146,8 +149,15 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip s
 			log.Warn("error get user by email", slog.String("err", dbError.Message))
 			return dto, dbError.Error
 		}
+		// проверяем наличие верификацию пользователя по email
+		if !userEntityByEmail.Email_verified_at.Valid {
+			log.Warn("user not verified", slog.String("name", userEntityByEmail.Name))
+			return dto, errorsApp.ErrVerifyNotFound.Error
+		}
 		userEntity = userEntityByEmail
 	}
+
+	// проверяем наличие пользователя по номеру телефона
 	if user.Phone_number.Valid {
 		log.Debug("login with phone number", slog.String("phone_number", user.Phone_number.String))
 		userEntityByPhone, dbError := s.authStorage.GetUserByPhoneNumber(ctx, user.Phone_number.String)
@@ -159,13 +169,12 @@ func (s *AuthService) Login(ctx context.Context, user dto.AuthLoginRequest, ip s
 			log.Warn("error get user by phone number", slog.String("err", dbError.Message))
 			return dto, dbError.Error
 		}
+		// проверяем наличие верификацию пользователя по email
+		if !userEntityByPhone.Email_verified_at.Valid {
+			log.Warn("user not verified", slog.String("name", userEntityByPhone.Name))
+			return dto, errorsApp.ErrVerifyNotFound.Error
+		}
 		userEntity = userEntityByPhone
-	}
-
-	if !userEntity.Email_verified_at.Valid &&
-		!userEntity.Phone_verified_at.Valid {
-		log.Warn("user not verified", slog.String("name", userEntity.Name))
-		return dto, errorsApp.ErrVerifyNotFound.Error
 	}
 
 	err := lib.CheckPassword(userEntity.Password_hash.String, user.Password)

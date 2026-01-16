@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -31,6 +32,9 @@ func main() {
 	fmt.Println("============ start main ============")
 	cfg := config.Mustload(configEnv)
 	Log, errFile := logger.InitLogger(cfg.ENV, cfg.LOG_ERROR_PATH)
+
+	b, _ := json.MarshalIndent(cfg, "", "  ")
+	fmt.Println(string(b))
 
 	prometheus := lib.NewPromRegistry(Log)
 	mux := http.NewServeMux()
