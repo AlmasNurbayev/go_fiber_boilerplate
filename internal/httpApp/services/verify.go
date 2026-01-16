@@ -51,6 +51,9 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 		}
 	}
 
+	// TODO проверять не отправляли ли мы код недавно
+	// получать из базы OTP и не давать отправить если прошло меньше 1 мин
+
 	errDeleteOtp := s.otpStorage.DeleteOtp(ctx, body.Address, body.Type)
 	if errDeleteOtp != nil {
 		log.Warn("error delete otp", slog.String("err", errDeleteOtp.Message))
