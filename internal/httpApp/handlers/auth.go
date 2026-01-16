@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/httpApp/dto"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
@@ -25,12 +26,14 @@ type authService interface {
 }
 
 type AuthHandler struct {
+	cfg     *config.Config
 	log     *slog.Logger
 	service authService
 }
 
-func NewAuthHandler(log *slog.Logger, service authService) *AuthHandler {
+func NewAuthHandler(cfg *config.Config, log *slog.Logger, service authService) *AuthHandler {
 	return &AuthHandler{
+		cfg:     cfg,
 		log:     log,
 		service: service,
 	}
@@ -80,6 +83,7 @@ func (h *AuthHandler) AuthRegister(c fiber.Ctx) error {
 // @Accept       json
 // @Produce      json
 // @Param        request  body      dto.AuthLoginRequest  true  "Request body"
+// @Header       200  {string}  Set-Cookie  "refresh_token cookie is set (HttpOnly)"
 // @Success      200      {object}  dto.AuthLoginResponse
 // @Failure      401      {string}  string  "authentication failed"
 // @Router       /auth/login [post]
@@ -116,7 +120,15 @@ func (h *AuthHandler) AuthLogin(c fiber.Ctx) error {
 		}
 		return c.Status(500).SendString(errorsApp.ErrInternalError.Message)
 	}
-	//sess.Set("authenticated", true)
+	cookie := new(fiber.Cookie)
+	cookie.Name = "refresh_token"
+	cookie.Value = res.RefreshToken
+	cookie.HTTPOnly = true
+	cookie.Secure = true // true в prod (HTTPS)
+	cookie.SameSite = fiber.CookieSameSiteStrictMode
+	cookie.Path = "/auth/login"
+	cookie.MaxAge = h.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS * 60 * 60
+	c.Cookie(cookie)
 
 	return c.Status(200).JSON(res)
 }
@@ -153,6 +165,7 @@ func (h *AuthHandler) AuthHello(c fiber.Ctx) error {
 // @Produce      json
 // @Security BearerAuth
 // @Success      200      {object}  dto.AuthLoginResponse
+// @Header       200  {string}  Set-Cookie  "refresh_token cookie is set (HttpOnly)"
 // @Failure      401      {string}  string  "authentication failed"
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
@@ -177,6 +190,14 @@ func (h *AuthHandler) AuthRefresh(c fiber.Ctx) error {
 
 		return c.Status(401).SendString(errorsApp.ErrAuthentication.Message)
 	}
+	cookie := new(fiber.Cookie)
+	cookie.Name = "refresh_token"
+	cookie.Value = res.RefreshToken
+	cookie.HTTPOnly = true
+	cookie.SameSite = fiber.CookieSameSiteStrictMode
+	cookie.Path = "/auth/refresh"
+	cookie.MaxAge = h.cfg.AUTH_REFRESH_TOKEN_EXP_HOURS * 60 * 60
+	c.Cookie(cookie)
 
 	return c.Status(200).JSON(res)
 }

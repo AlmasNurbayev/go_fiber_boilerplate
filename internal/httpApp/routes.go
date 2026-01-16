@@ -42,7 +42,7 @@ func RegisterUserRoutes(api fiber.Router, storage *storage.Storage, log *slog.Lo
 func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStorage *cache.SessionStorage, otpStorage *cache.OtpStorage, log *slog.Logger, cfg *config.Config) {
 
 	authService := services.NewAuthService(log, storage, sessionStorage, otpStorage, cfg)
-	authHandler := handlers.NewAuthHandler(log, authService)
+	authHandler := handlers.NewAuthHandler(cfg, log, authService)
 
 	log.Info("POST /api/auth/register")
 	api.Post("/auth/register", authHandler.AuthRegister)
