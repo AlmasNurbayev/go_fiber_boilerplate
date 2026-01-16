@@ -27,11 +27,22 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Send verify code to user address",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/dto.AuthConfirmVerifyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -205,11 +216,22 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Verify user addresses",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthSendVerifyRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthSendVerifyRequest"
+                            "$ref": "#/definitions/dto.AuthSendVerifyResponse"
                         }
                     },
                     "401": {
@@ -292,6 +314,56 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "authentication failed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/update-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Update user password for authenticated user",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthUpdatePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -496,6 +568,14 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.AuthSendVerifyResponse": {
+            "type": "object",
+            "properties": {
+                "otp_expires_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.AuthSession": {
             "type": "object",
             "properties": {
@@ -536,6 +616,27 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.AuthSession"
                     }
+                }
+            }
+        },
+        "dto.AuthUpdatePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password",
+                "user_id"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "old_password": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },

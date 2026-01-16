@@ -15,14 +15,14 @@ type AuthRegisterRequest struct {
 }
 
 type AuthRegisterResponse struct {
-	Id             int64     `json:"id"`
-	Name           string    `json:"name"`
-	Role_name      string    `json:"role_name"`
-	Otp_expires_at time.Time `json:"otp_expires_at"`
+	Id           int64     `json:"id"`
+	Name         string    `json:"name"`
+	Role_name    string    `json:"role_name"`
+	OtpExpiresAt time.Time `json:"otp_expires_at"`
 }
 
 type AuthLoginRequest struct {
-	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty,phoneKz" swaggertype:"string" example:"+77012345678"`
+	Phone_number null.String `json:"phone_number" validate:"required_without=Email,omitempty,phoneKZ" swaggertype:"string" example:"+77012345678"`
 	Email        null.String `json:"email" validate:"required_without=Phone_number,omitempty" swaggertype:"string" example:"test@mail.com"`
 	Password     string      `json:"password" validate:"required,min=8"`
 }
@@ -72,5 +72,11 @@ type AuthConfirmVerifyRequest struct {
 }
 
 type AuthSendVerifyResponse struct {
-	Otp_expires_at time.Time `json:"otp_expires_at"`
+	OtpExpiresAt time.Time `json:"otp_expires_at"`
+}
+
+type AuthUpdatePasswordRequest struct {
+	UserId      int64  `json:"user_id" validate:"required" swaggertype:"integer" example:"1"`
+	OldPassword string `json:"old_password" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=8"`
 }

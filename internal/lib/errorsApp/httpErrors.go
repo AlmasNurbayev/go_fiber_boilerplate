@@ -69,6 +69,11 @@ var (
 		Message: "verify not found or expired",
 		Error:   errors.New("verify not found or expired")}
 
+	ErrOldPasswordNotMatch = HttpError{
+		Code:    401,
+		Message: "old password not match",
+		Error:   errors.New("old password not match")}
+
 	ErrForbidden = HttpError{
 		Code:    403,
 		Message: "forbidden",

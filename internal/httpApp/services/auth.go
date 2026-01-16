@@ -34,6 +34,7 @@ type authStorage interface {
 	GetUserById(ctx context.Context, id int64) (models.UserEntity, *errorsApp.DbError)
 	UpdateUserEmailVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError
 	UpdateUserPhoneVerifyTimestamp(ctx context.Context, id int64) *errorsApp.DbError
+	UpdatePassword(ctx context.Context, id int64, password string) *errorsApp.DbError
 }
 
 type sessionStorage interface {
@@ -109,7 +110,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
 			return response, errSendVerify
 		}
-		response.Otp_expires_at = responseSend.Otp_expires_at
+		response.OtpExpiresAt = responseSend.OtpExpiresAt
 	case "email":
 		responseSend, errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
 			Type:    "email",
@@ -122,7 +123,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
 			return response, errSendVerify
 		}
-		response.Otp_expires_at = responseSend.Otp_expires_at
+		response.OtpExpiresAt = responseSend.OtpExpiresAt
 	default:
 		log.Warn("invalid confirm type", slog.String("confirm_type", user.ConfirmType))
 		return response, errorsApp.ErrBadRequest.Error
@@ -415,6 +416,31 @@ func (s *AuthService) RevokeSession(ctx fiber.Ctx, jtiString string) error {
 		default:
 			return errorsApp.ErrAuthentication.Error
 		}
+	}
+
+	return nil
+}
+
+func (s *AuthService) UpdatePassword(ctx context.Context, id int64, oldpassword string, newpassword string) error {
+	op := "services.UpdatePassword"
+	log := s.log.With(slog.String("op", op))
+
+	userEntity, dbError := s.authStorage.GetUserById(ctx, id)
+	if dbError != nil {
+		log.Warn("error get user by id", slog.String("err", dbError.Message))
+		return errorsApp.ErrUserNotFound.Error
+	}
+
+	isValidErr := lib.CheckPassword(userEntity.Password_hash.String, oldpassword)
+	if isValidErr != nil {
+		log.Warn("error verify password", slog.String("err", "password not match"))
+		return errorsApp.ErrOldPasswordNotMatch.Error
+	}
+
+	err := s.authStorage.UpdatePassword(ctx, id, newpassword)
+	if err != nil {
+		log.Warn("error update password", slog.String("err", err.Message))
+		return errorsApp.ErrInternalError.Error
 	}
 
 	return nil

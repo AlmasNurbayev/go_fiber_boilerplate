@@ -21,6 +21,7 @@ type authService interface {
 	RevokeSession(fiber.Ctx, string) error
 	SendVerify(context.Context, dto.AuthSendVerifyRequest) (dto.AuthSendVerifyResponse, error)
 	ConfirmVerify(context.Context, dto.AuthConfirmVerifyRequest) error
+	UpdatePassword(context.Context, int64, string, string) error
 }
 
 type AuthHandler struct {
@@ -263,8 +264,8 @@ func (h *AuthHandler) RevokeSession(c fiber.Ctx) error {
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Success      200      string  "ok"
-// @Success      200      {object}  dto.AuthSendVerifyRequest
+// @Param        request  body      dto.AuthSendVerifyRequest  true  "Request body"
+// @Success      200      {object}  dto.AuthSendVerifyResponse
 // @Failure      401      {string}  string  "authentication failed"
 // @Router       /auth/send-verify [post]
 func (h *AuthHandler) SendVerify(c fiber.Ctx) error {
@@ -297,8 +298,8 @@ func (h *AuthHandler) SendVerify(c fiber.Ctx) error {
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
+// @Param        request  body      dto.AuthConfirmVerifyRequest  true  "Request body"
 // @Success      200      string  "ok"
-// @Success      200      {object}  dto.AuthConfirmVerifyRequest
 // @Failure      400      {string}  string  "bad request"
 // @Router       /auth/confirm-verify [post]
 func (h *AuthHandler) ConfirmVerify(c fiber.Ctx) error {

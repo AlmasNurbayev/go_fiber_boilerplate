@@ -97,7 +97,7 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 		}()
 	}
 
-	response.Otp_expires_at = otpData.ExpireAt
+	response.OtpExpiresAt = otpData.ExpireAt
 
 	return response, nil
 }

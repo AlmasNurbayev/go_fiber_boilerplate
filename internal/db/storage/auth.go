@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/lib/errorsApp"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/models"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -158,6 +159,34 @@ func (s *Storage) UpdateUserPhoneVerifyTimestamp(ctx context.Context, id int64) 
 	query := `UPDATE "users" SET phone_verified_at = $1 WHERE id = $2 RETURNING *`
 
 	_, err := s.Db.Exec(ctx, query, time.Now(), id)
+	if err != nil {
+		log.Error(err.Error())
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &errorsApp.DbError{
+				Type:    "not_found",
+				Field:   "id",
+				Data:    id,
+				Message: "user not found",
+				Error:   errors.New("user with id " + strconv.FormatInt(id, 10) + " not found"),
+			}
+		}
+		return mapPgError(err)
+	}
+	return nil
+}
+
+func (s *Storage) UpdatePassword(ctx context.Context, id int64, password string) *errorsApp.DbError {
+	op := "storage.UpdatePassword"
+	log := s.log.With("op", op)
+	query := `UPDATE "users" SET password_hash = $1 WHERE id = $2 RETURNING *`
+
+	passwordHash, err := lib.HashPassword(password)
+	if err != nil {
+		log.Error(err.Error())
+		return mapPgError(err)
+	}
+
+	_, err = s.Db.Exec(ctx, query, passwordHash, id)
 	if err != nil {
 		log.Error(err.Error())
 		if errors.Is(err, pgx.ErrNoRows) {

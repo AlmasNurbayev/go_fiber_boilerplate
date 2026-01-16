@@ -60,4 +60,6 @@ func RegisterAuthRoutes(api fiber.Router, storage *storage.Storage, sessionStora
 	api.Post("/auth/send-verify", authHandler.SendVerify)
 	log.Info("POST /api/auth/confirm-verify")
 	api.Post("/auth/confirm-verify", authHandler.ConfirmVerify)
+	log.Info("POST /api/auth/update-password")
+	api.Post("/auth/update-password", middleware.RequireAuth(log, cfg), authHandler.UpdatePassword)
 }
