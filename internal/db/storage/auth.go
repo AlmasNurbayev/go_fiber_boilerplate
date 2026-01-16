@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"strconv"
 	"time"
 
@@ -84,8 +83,6 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (models.User
 	op := "storage.GetUserByEmail"
 	log := s.log.With("op", op)
 	var users = models.UserEntity{}
-
-	log.Debug("looking for user by email", slog.String("email", email))
 
 	query := `SELECT * FROM "users" WHERE email = $1`
 

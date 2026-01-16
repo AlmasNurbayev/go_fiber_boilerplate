@@ -21,7 +21,7 @@ func RequireAuth(log *slog.Logger, cfg *config.Config) fiber.Handler {
 			log.Error("GetClaimsFromAccessToken error: ", err)
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
-		log.Debug("Claims: ", slog.Any("claims", claims))
+		//log.Debug("Claims: ", slog.Any("claims", claims))
 		c.Locals("user_id", claims.UserId)
 
 		return c.Next()
