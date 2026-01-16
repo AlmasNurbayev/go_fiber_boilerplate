@@ -3,7 +3,7 @@ package httpApp
 import (
 	"log/slog"
 
-	_ "github.com/AlmasNurbayev/go_fiber_boilerplate/docs"
+	_ "github.com/AlmasNurbayev/go_fiber_boilerplate/docs/swagger"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/config"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/cache"
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/db/storage"

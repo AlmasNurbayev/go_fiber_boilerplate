@@ -7,3 +7,4 @@
 /_logs
 .idea/
 .DS_Store
+/docs/swagger

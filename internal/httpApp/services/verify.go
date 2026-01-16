@@ -144,7 +144,7 @@ func (s *AuthService) ConfirmVerify(ctx context.Context, body dto.AuthConfirmVer
 		// если пользователь найден, обновляем время верификации
 		err2 := s.authStorage.UpdateUserPhoneVerifyTimestamp(ctx, user.Id)
 		if err2 != nil {
-			log.Warn("error update user phone verify timestamp", slog.String("err", err.Message))
+			log.Warn("error update user phone verify timestamp", slog.String("err", err2.Message))
 			return errorsApp.ErrInternalError.Error
 		}
 	}
