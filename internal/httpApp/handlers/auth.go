@@ -19,7 +19,7 @@ type authService interface {
 	Refresh(context.Context, string) (dto.AuthLoginResponse, error)
 	Sessions(context.Context, int64) (dto.AuthSessionResponse, error)
 	RevokeSession(fiber.Ctx, string) error
-	SendVerify(context.Context, dto.AuthSendVerifyRequest) error
+	SendVerify(context.Context, dto.AuthSendVerifyRequest) (dto.AuthSendVerifyResponse, error)
 	ConfirmVerify(context.Context, dto.AuthConfirmVerifyRequest) error
 }
 
@@ -284,13 +284,13 @@ func (h *AuthHandler) SendVerify(c fiber.Ctx) error {
 		})
 	}
 
-	err2 := h.service.SendVerify(c, body)
+	responseOtp, err2 := h.service.SendVerify(c, body)
 	if err2 != nil {
 		log.Warn(err2.Error())
 		return c.Status(400).SendString(err2.Error())
 	}
 
-	return c.Status(200).SendString("ok")
+	return c.Status(200).JSON(responseOtp)
 }
 
 // @Summary      Send verify code to user address

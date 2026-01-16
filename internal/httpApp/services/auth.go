@@ -101,7 +101,7 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 	// отправляем код подтверждения
 	switch user.ConfirmType {
 	case "phone":
-		errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
+		responseSend, errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
 			Type:    "phone",
 			Address: user.Phone_number.String,
 		})
@@ -109,8 +109,9 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
 			return response, errSendVerify
 		}
+		response.Otp_expires_at = responseSend.Otp_expires_at
 	case "email":
-		errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
+		responseSend, errSendVerify := s.SendVerify(ctx, dto.AuthSendVerifyRequest{
 			Type:    "email",
 			Address: user.Email.String,
 		})
@@ -121,11 +122,11 @@ func (s *AuthService) Register(ctx context.Context, user dto.AuthRegisterRequest
 			log.Warn("error send verify", slog.String("err", errSendVerify.Error()))
 			return response, errSendVerify
 		}
+		response.Otp_expires_at = responseSend.Otp_expires_at
 	default:
 		log.Warn("invalid confirm type", slog.String("confirm_type", user.ConfirmType))
 		return response, errorsApp.ErrBadRequest.Error
 	}
-
 	return response, nil
 }
 

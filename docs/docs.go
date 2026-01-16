@@ -471,6 +471,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "otp_expires_at": {
+                    "type": "string"
+                },
                 "role_name": {
                     "type": "string"
                 }

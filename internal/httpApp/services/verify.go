@@ -12,17 +12,19 @@ import (
 	"github.com/AlmasNurbayev/go_fiber_boilerplate/internal/notifications"
 )
 
-func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyRequest) error {
+func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyRequest) (dto.AuthSendVerifyResponse, error) {
 	op := "services.SendVerify"
 	log := s.log.With(slog.String("op", op))
 
+	response := dto.AuthSendVerifyResponse{}
+
 	if body.Type != "phone" && body.Type != "email" {
 		log.Warn("invalid type", slog.String("type", body.Type))
-		return errorsApp.ErrBadRequest.Error
+		return response, errorsApp.ErrBadRequest.Error
 	}
 	if body.Address == "" {
 		log.Warn("address is empty", slog.String("type", body.Type))
-		return errorsApp.ErrBadRequest.Error
+		return response, errorsApp.ErrBadRequest.Error
 	}
 
 	// проверяем существует ли пользователь
@@ -30,22 +32,22 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 		user, err := s.authStorage.GetUserByEmail(ctx, body.Address)
 		if err != nil {
 			log.Warn("error get user by email", slog.String("err", err.Message))
-			return errorsApp.ErrInternalError.Error
+			return response, errorsApp.ErrInternalError.Error
 		}
 		if user.Id == 0 {
 			log.Warn("user not found by email", slog.String("address", body.Address))
-			return errorsApp.ErrAuthentication.Error
+			return response, errorsApp.ErrAuthentication.Error
 		}
 	}
 	if body.Type == "phone" {
 		user, err := s.authStorage.GetUserByPhoneNumber(ctx, body.Address)
 		if err != nil {
 			log.Warn("error get user by phone", slog.String("err", err.Message))
-			return errorsApp.ErrInternalError.Error
+			return response, errorsApp.ErrInternalError.Error
 		}
 		if user.Id == 0 {
 			log.Warn("user not found by phone", slog.String("address", body.Address))
-			return errorsApp.ErrAuthentication.Error
+			return response, errorsApp.ErrAuthentication.Error
 		}
 	}
 
@@ -67,9 +69,9 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 	if err != nil {
 		log.Warn("error save otp", slog.String("err", err.Message))
 		if err.Type == "already_otp" {
-			return errorsApp.ErrAlreadyOtp.Error
+			return response, errorsApp.ErrAlreadyOtp.Error
 		}
-		return errorsApp.ErrInternalError.Error
+		return response, errorsApp.ErrInternalError.Error
 	}
 
 	if body.Type == "phone" {
@@ -95,7 +97,9 @@ func (s *AuthService) SendVerify(ctx context.Context, body dto.AuthSendVerifyReq
 		}()
 	}
 
-	return nil
+	response.Otp_expires_at = otpData.ExpireAt
+
+	return response, nil
 }
 
 func (s *AuthService) ConfirmVerify(ctx context.Context, body dto.AuthConfirmVerifyRequest) error {

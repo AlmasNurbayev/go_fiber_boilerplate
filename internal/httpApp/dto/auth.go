@@ -15,9 +15,10 @@ type AuthRegisterRequest struct {
 }
 
 type AuthRegisterResponse struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	Role_name string `json:"role_name"`
+	Id             int64     `json:"id"`
+	Name           string    `json:"name"`
+	Role_name      string    `json:"role_name"`
+	Otp_expires_at time.Time `json:"otp_expires_at"`
 }
 
 type AuthLoginRequest struct {
@@ -68,4 +69,8 @@ type AuthConfirmVerifyRequest struct {
 	Type    string `json:"type" validate:"required" swaggertype:"string" example:"phone"`
 	Address string `json:"address" validate:"required" swaggertype:"string" example:"+77012345678"`
 	Code    string `json:"code" validate:"required,min=6,max=6"`
+}
+
+type AuthSendVerifyResponse struct {
+	Otp_expires_at time.Time `json:"otp_expires_at"`
 }
